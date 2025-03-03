@@ -1,1 +1,1 @@
-# wifi-connect
+# wifi-setup
