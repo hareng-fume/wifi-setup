@@ -1,0 +1,12 @@
+<RCC>
+    <qresource prefix="/">
+        <file>resources/icons/user/user_64.png</file>
+        <file>resources/icons/visible/invisible_64.png</file>
+        <file>resources/icons/visible/visible_64.png</file>
+        <file>resources/icons/wifi/wifi_default_64.png</file>
+        <file>resources/icons/wifi/wifi_green_64.png</file>
+        <file>resources/icons/wifi/wifi_red_64.png</file>
+        <file>qml/main.qml</file>
+        <file>qml/PasswordField.qml</file>
+    </qresource>
+</RCC>
