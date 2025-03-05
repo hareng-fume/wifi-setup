@@ -5,6 +5,7 @@ add_library(communication STATIC
   server.cpp
   settings.h
   settings.cpp
+  wifi_api.h
 )
 
 target_link_libraries(communication PRIVATE

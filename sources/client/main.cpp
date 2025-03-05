@@ -1,5 +1,8 @@
+#include "wifi_client.h"
+
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
+#include <QQmlContext>
 
 int main(int argc, char *argv[])
 {
@@ -8,7 +11,12 @@ int main(int argc, char *argv[])
 #endif
     QGuiApplication app(argc, argv);
 
+    // create Http Wi-Fi client
+    WifiHttpClient wifiClient("localhost", 8080);
+
     QQmlApplicationEngine engine;
+    engine.rootContext()->setContextProperty("wifiClient", &wifiClient);
+
     const QUrl url(QStringLiteral("qrc:/qml/main.qml"));
     QObject::connect(
         &engine,

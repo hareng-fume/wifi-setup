@@ -54,7 +54,11 @@ ApplicationWindow {
             ComboBox {
                 id: networkSelector
                 width: parent.width
-                //model: ["Option 1", "Option 2", "Option 3"]
+                model: wifiClient.getNetworkModel()
+            }
+
+            Component.onCompleted: {
+                wifiClient.requestNetworkList(); // automatically request networks on start
             }
         }
 
