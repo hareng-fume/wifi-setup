@@ -3,16 +3,27 @@
 
 #include "settings.h"
 
+#include <QMap>
+#include <QString>
 #include <QTcpServer>
+
 #include <memory>
 
 namespace Communication {
+namespace Status {
+inline static constexpr const char *_OK = "200 OK";
+inline static constexpr const char *_UNAUTHORIZED = "401 Unauthorized";
+inline static constexpr const char *_BAD_REQUEST = "400 Bad Request";
+inline static constexpr const char *_NOT_FOUND = "404 Not Found";
+} // namespace Status
 
 class HttpServer : public QTcpServer
 {
     Q_OBJECT
 
 public:
+    explicit HttpServer(QObject *ip_parent = nullptr);
+
     template<typename TSettings, typename... TArgs>
     explicit HttpServer(QObject *ip_parent, TArgs &&...i_args)
         : QTcpServer(ip_parent)
@@ -28,13 +39,23 @@ public:
         }
     }
 
-    bool listen(const QHostAddress &address = QHostAddress::Any, quint16 port = 0);
+    void start(quint16 i_port = 8080);
+    void route(const QString &i_endpoint,
+               std::function<void(QTcpSocket *, const QString &)> i_callback);
+    void sendResponse(QTcpSocket *ip_socket,
+                      const QString &i_status,
+                      const QByteArray &i_responseData);
 
 protected:
     void incomingConnection(qintptr i_socketDescriptor) override;
 
+private slots:
+    void handleNewConnection();
+    void processRequest(QTcpSocket *ip_socket);
+
 private:
     std::unique_ptr<ISettings> mp_settings;
+    QMap<QString, std::function<void(QTcpSocket *, const QString &)>> m_routes;
 };
 
 } // namespace Communication

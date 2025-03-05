@@ -2,6 +2,7 @@
 
 #include <QDebug>
 #include <QJsonDocument>
+#include <QJsonObject>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QUrl>
@@ -33,14 +34,14 @@ void HttpClient::sendGetRequest(const QString &i_endpoint,
 
 //-----------------------------------------------------------------------------
 void HttpClient::sendPostRequest(const QString &i_endpoint,
-                                 const QJsonObject &i_data,
+                                 QJsonObject i_jsonObj,
                                  std::function<void(QByteArray)> i_callback)
 {
     QNetworkRequest request(m_baseUrl + i_endpoint);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
-    QJsonDocument doc(i_data);
-    auto jsonData = doc.toJson();
+    QJsonDocument doc(i_jsonObj);
+    QByteArray jsonData = doc.toJson();
     auto *p_reply = mp_networkAccessManager->post(request, jsonData);
 
     m_requestMap.insert(p_reply, i_callback);

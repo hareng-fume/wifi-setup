@@ -18,7 +18,7 @@ public:
 
     void sendGetRequest(const QString &i_endpoint, std::function<void(QByteArray)> i_callback);
     void sendPostRequest(const QString &i_endpoint,
-                         const QJsonObject &i_data,
+                         QJsonObject i_data,
                          std::function<void(QByteArray)> i_callback);
 
 private slots:

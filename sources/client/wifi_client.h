@@ -17,6 +17,7 @@ public:
 
 private:
     void _handleNetworkList(const QByteArray &i_data);
+    void _handlePasswordValidation(const QByteArray &i_data);
 
 private:
     QStringListModel m_model;
