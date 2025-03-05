@@ -8,5 +8,6 @@
         <file>resources/icons/wifi/wifi_red_64.png</file>
         <file>qml/main.qml</file>
         <file>qml/PasswordField.qml</file>
+        <file>settings/wifi.json</file>
     </qresource>
 </RCC>
