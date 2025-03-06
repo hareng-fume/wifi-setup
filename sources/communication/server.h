@@ -47,7 +47,7 @@ public:
                       const QByteArray &i_responseData);
 
 protected:
-    void incomingConnection(qintptr i_socketDescriptor) override;
+    //void incomingConnection(qintptr i_socketDescriptor) override;
 
 private slots:
     void handleNewConnection();

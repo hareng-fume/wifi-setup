@@ -14,12 +14,13 @@ WifiHttpClient::WifiHttpClient(const QString &i_hostName,
                                quint16 i_port,
                                QObject *ip_parent /*= nullptr*/)
     : Communication::HttpClient(i_hostName, i_port, ip_parent)
+    , mp_model(new QStringListModel(this))
 {}
 
 //-----------------------------------------------------------------------------
-QStringListModel *WifiHttpClient::getNetworkModel()
+QStringListModel *WifiHttpClient::networkModel() const
 {
-    return &m_model;
+    return mp_model;
 }
 
 //-----------------------------------------------------------------------------
@@ -42,15 +43,25 @@ void WifiHttpClient::connectToNetwork(const QString &i_name, const QString &i_pa
 //-----------------------------------------------------------------------------
 void WifiHttpClient::_handleNetworkList(const QByteArray &i_data)
 {
+    qDebug() << "received raw data: " << i_data;
     auto jsonDoc = QJsonDocument::fromJson(i_data);
-    Q_ASSERT(jsonDoc.isArray());
 
-    QStringList networkNames;
-    for (auto &&val : jsonDoc.array())
-        networkNames << val.toString();
+    if (jsonDoc.object().contains("error")) {
+        qDebug() << "can't get networks from server";
+        return;
+    }
 
-    // update the model
-    m_model.setStringList(networkNames);
+    if (jsonDoc.object().contains("wifi_networks")) {
+        QStringList networkNames;
+        for (auto &&val : jsonDoc.object()["wifi_networks"].toArray())
+            networkNames << val.toString();
+
+        qDebug() << "networks received: " << networkNames;
+
+        // update the model
+        mp_model->setStringList(networkNames);
+        emit networkListUpdated();
+    }
 }
 
 //-----------------------------------------------------------------------------

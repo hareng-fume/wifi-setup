@@ -58,7 +58,14 @@ ApplicationWindow {
             ComboBox {
                 id: networkSelector
                 width: parent.width
-                model: wifiClient.getNetworkModel()
+                model: wifiClient.networkModel
+                textRole: "display"
+
+                contentItem: Text {
+                    text: parent.displayText
+                    leftPadding: 2  // Padding only for the selected item
+                    verticalAlignment: Text.AlignVCenter
+                }
 
                 onCurrentIndexChanged: {
                     if (networkSelector.currentIndex !== -1 && !networkSelected)

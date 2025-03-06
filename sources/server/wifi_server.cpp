@@ -3,6 +3,7 @@
 #include <communication/settings.h>
 #include <communication/wifi_api.h>
 
+#include <QDebug>
 #include <QFile>
 #include <QJsonArray>
 #include <QJsonObject>
@@ -28,12 +29,30 @@ WifiHttpServer::WifiHttpServer(QJsonObject &&i_settings)
 void WifiHttpServer::_handleNetworkListRequest(QTcpSocket *ip_socket, const QString &i_requestStr)
 {
     Q_UNUSED(i_requestStr);
-    QJsonArray networkList({QJsonObject{{"id", "wifi_1"}}, QJsonObject{{"id", "wifi_2"}}});
 
-    QJsonObject responseObj{{"wifi_networks", networkList}};
-    QByteArray responseData = QJsonDocument(responseObj).toJson(QJsonDocument::Indented);
+    QJsonObject responseObj;
+    QString status;
 
-    sendResponse(ip_socket, Status::_OK, responseData);
+    auto networks = m_model["wifi_params"];
+    if (networks.isUndefined()) {
+        responseObj["error"] = "No available Wi-Fi networks found during scanning.";
+        status = Status::_BAD_REQUEST;
+    } else {
+        QJsonArray networkList;
+        for (QJsonValue &&value : networks.toArray()) {
+            auto jsonObj = value.toObject();
+            if (jsonObj.contains("id")) {
+                networkList.append(jsonObj["id"]);
+                qDebug() << jsonObj["id"].toString();
+            }
+        }
+
+        responseObj["wifi_networks"] = networkList;
+        status = Status::_OK;
+    }
+
+    auto responseData = QJsonDocument(responseObj).toJson();
+    sendResponse(ip_socket, status, responseData);
 }
 
 //-----------------------------------------------------------------------------

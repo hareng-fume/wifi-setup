@@ -7,20 +7,26 @@
 
 class WifiHttpClient : public Communication::HttpClient
 {
+    Q_OBJECT
+    Q_PROPERTY(QStringListModel *networkModel READ networkModel NOTIFY networkListUpdated)
+
 public:
     WifiHttpClient(const QString &i_hostName, quint16 i_port, QObject *ip_parent = nullptr);
 
-    QStringListModel *getNetworkModel();
+    QStringListModel *networkModel() const;
 
-    void requestNetworkList();
+    Q_INVOKABLE void requestNetworkList();
     void connectToNetwork(const QString &i_name, const QString &i_password);
+
+signals:
+    void networkListUpdated();
 
 private:
     void _handleNetworkList(const QByteArray &i_data);
     void _handlePasswordValidation(const QByteArray &i_data);
 
 private:
-    QStringListModel m_model;
+    QStringListModel *mp_model;
 };
 
 #endif // WIFI_CLIENT_H

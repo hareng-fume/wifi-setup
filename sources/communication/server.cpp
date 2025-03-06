@@ -33,7 +33,7 @@ HttpServer::HttpServer(QObject *ip_parent /*= nullptr*/)
 }
 
 //-----------------------------------------------------------------------------
-void HttpServer::incomingConnection(qintptr i_socketDescriptor)
+/*void HttpServer::incomingConnection(qintptr i_socketDescriptor)
 {
     QTcpSocket *clientSocket = new QTcpSocket(this);
     clientSocket->setSocketDescriptor(i_socketDescriptor);
@@ -63,7 +63,7 @@ void HttpServer::incomingConnection(qintptr i_socketDescriptor)
         clientSocket->flush();
         clientSocket->disconnectFromHost();
     });
-}
+}*/
 
 //-----------------------------------------------------------------------------
 void HttpServer::handleNewConnection()
