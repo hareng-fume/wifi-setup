@@ -7,6 +7,10 @@ ApplicationWindow {
     height: 640
     title: "WiFi Setup"
 
+    property bool passwordValid: false
+    property bool networkSelected: false
+    property bool readyToConnect: passwordValid && networkSelected
+
     header: Rectangle {
         width: parent.width
         height: 50
@@ -55,6 +59,11 @@ ApplicationWindow {
                 id: networkSelector
                 width: parent.width
                 model: wifiClient.getNetworkModel()
+
+                onCurrentIndexChanged: {
+                    if (networkSelector.currentIndex !== -1 && !networkSelected)
+                        networkSelected = true
+                }
             }
 
             Component.onCompleted: {
@@ -73,7 +82,15 @@ ApplicationWindow {
             }
 
             PasswordField {
+                id: passwordField
                 width: parent.width
+            }
+
+            Connections {
+                target: passwordField
+                function onPasswordValidityChanged(valid) {
+                    passwordValid = valid
+                }
             }
         }
     }
@@ -95,10 +112,12 @@ ApplicationWindow {
                 height: 35
                 fillMode: Image.PreserveAspectFit
                 anchors.verticalCenter: parent.verticalCenter
+                opacity: readyToConnect ? 1.0 : 0.5
             }
 
             Button {
                 id: connectButton
+                enabled: readyToConnect
                 text: "Connect"
                 width: 80
                 height: parent.height-10
@@ -108,5 +127,7 @@ ApplicationWindow {
         } // Row
 
     } // footer
+
+
 
 } // ApplicationWindow

@@ -3,6 +3,7 @@
 #include <communication/settings.h>
 #include <communication/wifi_api.h>
 
+#include <QFile>
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QString>
@@ -10,8 +11,9 @@
 using namespace Communication;
 
 //-----------------------------------------------------------------------------
-WifiHttpServer::WifiHttpServer()
+WifiHttpServer::WifiHttpServer(QJsonObject &&i_settings)
     : HttpServer()
+    , m_model(std::move(i_settings))
 {
     route(WIFI_NETWORKS, [this](QTcpSocket *ip_socket, const QString &i_requestStr) {
         _handleNetworkListRequest(ip_socket, i_requestStr);

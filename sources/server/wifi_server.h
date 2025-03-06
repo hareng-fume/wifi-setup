@@ -3,20 +3,19 @@
 
 #include <communication/server.h>
 
-#include <QMap>
-#include <QString>
+#include <QJsonObject>
 
 class WifiHttpServer : public Communication::HttpServer
 {
 public:
-    WifiHttpServer();
+    explicit WifiHttpServer(QJsonObject &&i_settings);
 
 private:
     void _handleNetworkListRequest(QTcpSocket *ip_socket, const QString &i_requestStr);
     void _handleAuthenticationRequest(QTcpSocket *ip_socket, const QString &i_requestStr);
 
 private:
-    QMap<QString, QString> m_model;
+    QJsonObject m_model;
 };
 
 #endif // WIFI_SERVER_H

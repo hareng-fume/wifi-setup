@@ -2,9 +2,11 @@
 
 #include <QCoreApplication>
 #include <QDebug>
+#include <QHostAddress>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QString>
 #include <QTcpSocket>
 
 namespace _Details {
@@ -116,13 +118,18 @@ void HttpServer::route(const QString &i_endpoint,
 }
 
 //-----------------------------------------------------------------------------
-void HttpServer::start(quint16 i_port /*= 8080*/)
+void HttpServer::start(const QString &i_address, quint16 i_port /*= 8080*/)
 {
-    if (!listen(QHostAddress::Any, i_port)) {
-        qDebug() << "Server failed to start!";
-    } else {
-        qDebug() << "Server listening on port 8080...";
+    QHostAddress hostAddress;
+    if (!hostAddress.setAddress(i_address)) {
+        qCritical() << "Invalid IP address provided: " << i_address;
+        return;
     }
+
+    if (!listen(hostAddress, i_port))
+        qDebug() << "Server failed to start!";
+    else
+        qDebug() << "Server listening on " << i_address << ", port " << i_port << "...";
 }
 
 } // namespace Communication

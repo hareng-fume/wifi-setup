@@ -9,20 +9,29 @@ Rectangle {
     border.color: "#ccc"
     color: "white"
 
-    property alias text: inputField.text
-    property alias placeholderText: inputField.placeholderText
+    property alias password: passwordField.text
+    property alias placeholderText: passwordField.placeholderText
+
+    property bool isValid: true
+    signal passwordValidityChanged(bool valid)
 
     Row {
         anchors.fill: parent
         spacing: 5
 
         TextField {
-            id: inputField
+            id: passwordField
             width: parent.width - eyeButton.width - 10
             height: parent.height
-            placeholderText: "16 charachter minimum"
             color: "black"
+
+            placeholderText: "16 charachter minimum"
             placeholderTextColor: "gray"
+
+            validator: RegularExpressionValidator {
+                regularExpression: /^[A-Za-z_\W][A-Za-z0-9_\W]{15,}$/
+            }
+
             echoMode: TextInput.Password // initially hidden
             clip: true
 
@@ -37,12 +46,14 @@ Rectangle {
 
             // ensure minimum 16 characters
             onTextChanged: {
-                if (text.length < 16) {
-                    color = "red"
-                } else {
-                    color = "black"
+                var _isValid = !(password.length < 16 || !validator.regularExpression.test(password))
+                if (isValid !== _isValid) {
+                    isValid = _isValid
+                    passwordField.color = isValid ? "black" : "red"
+                    passwordValidityChanged(isValid)
                 }
             }
+
         } // TextField
 
         Rectangle {
@@ -65,7 +76,7 @@ Rectangle {
                 anchors.fill: parent
                 onClicked: {
                     eyeButton.state = eyeButton.state === "visible" ? "hidden" : "visible";
-                    inputField.echoMode = eyeButton.state === "visible" ? TextInput.Normal : TextInput.Password;
+                    passwordField.echoMode = eyeButton.state === "visible" ? TextInput.Normal : TextInput.Password;
                 }
             }
 

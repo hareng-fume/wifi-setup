@@ -39,7 +39,7 @@ public:
         }
     }
 
-    void start(quint16 i_port = 8080);
+    void start(const QString &i_address, quint16 i_port = 8080);
     void route(const QString &i_endpoint,
                std::function<void(QTcpSocket *, const QString &)> i_callback);
     void sendResponse(QTcpSocket *ip_socket,
