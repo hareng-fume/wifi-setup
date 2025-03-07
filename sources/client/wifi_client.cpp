@@ -67,5 +67,10 @@ void WifiHttpClient::_handleNetworkList(const QByteArray &i_data)
 //-----------------------------------------------------------------------------
 void WifiHttpClient::_handlePasswordValidation(const QByteArray &i_data)
 {
-    Q_UNUSED(i_data);
+    auto jsonDoc = QJsonDocument::fromJson(i_data);
+    if (jsonDoc.object().contains("error")) {
+        qDebug() << jsonDoc.object()["error"].toString();
+    } else {
+        qDebug() << "password validation result: " << i_data;
+    }
 }

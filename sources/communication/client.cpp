@@ -50,14 +50,13 @@ void HttpClient::sendPostRequest(const QString &i_endpoint,
 //-----------------------------------------------------------------------------
 void HttpClient::onResponseReceived(QNetworkReply *ip_reply)
 {
-    if (ip_reply->error() == QNetworkReply::NoError) {
-        auto callback = m_requestMap.value(ip_reply);
-        callback(ip_reply->readAll());
+    if (m_requestMap.contains(ip_reply)) {
+        m_requestMap[ip_reply](ip_reply->readAll());
+        m_requestMap.remove(ip_reply);
     } else {
-        qDebug() << "Error in response: " << ip_reply->errorString();
+        qDebug() << "ERROR: no callback registered";
     }
 
-    m_requestMap.remove(ip_reply);
     ip_reply->deleteLater();
 }
 

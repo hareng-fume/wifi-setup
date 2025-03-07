@@ -11,10 +11,29 @@
 
 using namespace Communication;
 
+namespace _Details {
+
 //-----------------------------------------------------------------------------
-WifiHttpServer::WifiHttpServer(QJsonObject &&i_settings)
+static QJsonObject _extractJSONPayload(const QString &i_httpRequestStr)
+{
+    // The HTTP headers and body are separated by two consecutive newlines (\r\n\r\n)
+    int jsonStart = i_httpRequestStr.indexOf("\r\n\r\n");
+
+    if (jsonStart != -1) {
+        QString jsonStr = i_httpRequestStr.mid(jsonStart + 4).trimmed();
+        QJsonDocument jsonDoc = QJsonDocument::fromJson(jsonStr.toUtf8());
+
+        if (!jsonDoc.isNull() && jsonDoc.isObject())
+            return jsonDoc.object();
+    }
+    return {};
+}
+
+} // namespace _Details
+
+//-----------------------------------------------------------------------------
+WifiHttpServer::WifiHttpServer()
     : HttpServer()
-    , m_model(std::move(i_settings))
 {
     route(WIFI_NETWORKS, [this](QTcpSocket *ip_socket, const QString &i_requestStr) {
         _handleNetworkListRequest(ip_socket, i_requestStr);
@@ -26,6 +45,28 @@ WifiHttpServer::WifiHttpServer(QJsonObject &&i_settings)
 }
 
 //-----------------------------------------------------------------------------
+void WifiHttpServer::loadWifiCredentials(QJsonObject &&i_settings)
+{
+    m_wifiCredentials.clear();
+
+    if (!i_settings.contains("wifi_params") || !i_settings["wifi_params"].isArray()) {
+        qDebug() << "Invalid JSON format: missing 'wifi_params'";
+        return;
+    }
+
+    for (auto &&value : i_settings["wifi_params"].toArray()) {
+        auto jsonObj = value.toObject();
+        if (jsonObj.contains("id") && jsonObj.contains("auth")) {
+            auto id = jsonObj["id"].toString();
+            auto auth = jsonObj["auth"].toString();
+            if (!id.isEmpty() && !auth.isEmpty())
+                m_wifiCredentials[id] = auth;
+        }
+    }
+    qDebug() << "Loaded WiFi credentials:" << m_wifiCredentials;
+}
+
+//-----------------------------------------------------------------------------
 void WifiHttpServer::_handleNetworkListRequest(QTcpSocket *ip_socket, const QString &i_requestStr)
 {
     Q_UNUSED(i_requestStr);
@@ -33,21 +74,11 @@ void WifiHttpServer::_handleNetworkListRequest(QTcpSocket *ip_socket, const QStr
     QJsonObject responseObj;
     QString status;
 
-    auto networks = m_model["wifi_params"];
-    if (networks.isUndefined()) {
+    if (m_wifiCredentials.isEmpty()) {
         responseObj["error"] = "No available Wi-Fi networks found during scanning.";
         status = Status::_BAD_REQUEST;
     } else {
-        QJsonArray networkList;
-        for (QJsonValue &&value : networks.toArray()) {
-            auto jsonObj = value.toObject();
-            if (jsonObj.contains("id")) {
-                networkList.append(jsonObj["id"]);
-                qDebug() << jsonObj["id"].toString();
-            }
-        }
-
-        responseObj["wifi_networks"] = networkList;
+        responseObj["wifi_networks"] = QJsonArray::fromStringList(m_wifiCredentials.keys());
         status = Status::_OK;
     }
 
@@ -58,30 +89,37 @@ void WifiHttpServer::_handleNetworkListRequest(QTcpSocket *ip_socket, const QStr
 //-----------------------------------------------------------------------------
 void WifiHttpServer::_handleAuthenticationRequest(QTcpSocket *ip_socket, const QString &i_requestStr)
 {
-    // request example: {"id": "wifi_1", "auth": "!QAZxsw2#EDCvfr4"}
-
-    QByteArray requestData = i_requestStr.toUtf8();
-    auto jsonDoc = QJsonDocument::fromJson(requestData);
-    auto jsonObj = jsonDoc.object();
-
     QJsonObject responseObj;
     QString status;
 
-    if (!jsonObj.contains("id") || jsonObj["id"].toString().isEmpty()) {
-        responseObj["error"] = "Missing or invalid 'id' parameter";
-        status = Status::_BAD_REQUEST;
-    } else if (!jsonObj.contains("auth") || jsonObj["auth"].toString().isEmpty()) {
-        responseObj["error"] = "Missing or invalid 'auth' parameter";
+    auto requestJsonObj = _Details::_extractJSONPayload(i_requestStr);
+    if (requestJsonObj.isEmpty()) {
+        responseObj["error"] = "Invalid or impossible to extract JSON";
         status = Status::_BAD_REQUEST;
     } else {
-        auto networkId = jsonObj["id"].toString();
-        if (m_model.contains(networkId)) {
-            bool valid = (m_model[networkId] == jsonObj["auth"].toString());
-            responseObj["password_valid"] = valid;
-            status = valid ? Status::_OK : Status::_UNAUTHORIZED;
+        // request example: {"id": "wifi_1", "auth": "!QAZxsw2#EDCvfr4"}
+
+        if (!requestJsonObj.contains("id") || requestJsonObj["id"].toString().isEmpty()) {
+            responseObj["error"] = "Missing or invalid 'id' parameter";
+            status = Status::_BAD_REQUEST;
+        } else if (!requestJsonObj.contains("auth") || requestJsonObj["auth"].toString().isEmpty()) {
+            responseObj["error"] = "Missing or invalid 'auth' parameter";
+            status = Status::_BAD_REQUEST;
         } else {
-            responseObj["error"] = "Network ID not found";
-            status = Status::_NOT_FOUND; // 404
+            auto networkId = requestJsonObj["id"].toString();
+            auto networkPass = requestJsonObj["auth"].toString();
+            if (m_wifiCredentials.contains(networkId)) {
+                if (m_wifiCredentials[networkId] == networkPass) {
+                    responseObj["message"] = QString("Accepted connection to '%1'").arg(networkId);
+                    status = Status::_OK;
+                } else {
+                    responseObj["error"] = "Wrong password";
+                    status = Status::_UNAUTHORIZED;
+                }
+            } else {
+                responseObj["error"] = QString("Network '%1' not found").arg(networkId);
+                status = Status::_NOT_FOUND; // 404
+            }
         }
     }
 

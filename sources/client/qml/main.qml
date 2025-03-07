@@ -130,6 +130,9 @@ ApplicationWindow {
                 height: parent.height-10
                 x: parent.width-width-10
                 anchors.verticalCenter: parent.verticalCenter
+
+                onClicked: wifiClient.connectToNetwork(networkSelector.currentText
+                                                       , passwordField.password)
             }
         } // Row
 

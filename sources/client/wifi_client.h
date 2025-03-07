@@ -16,7 +16,7 @@ public:
     QStringListModel *networkModel() const;
 
     Q_INVOKABLE void requestNetworkList();
-    void connectToNetwork(const QString &i_name, const QString &i_password);
+    Q_INVOKABLE void connectToNetwork(const QString &i_name, const QString &i_password);
 
 signals:
     void networkListUpdated();
