@@ -55,9 +55,8 @@ void HttpClient::onResponseReceived(QNetworkReply *ip_reply)
         m_requestMap.remove(ip_reply);
     } else {
         qDebug() << "ERROR: no callback registered";
+        ip_reply->deleteLater();
     }
-
-    ip_reply->deleteLater();
 }
 
 } // namespace Communication

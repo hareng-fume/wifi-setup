@@ -87,6 +87,7 @@ void WifiHttpClient::_handleNetworkList(QNetworkReply *ip_reply)
         auto errMsg = jsonObj.contains("error") ? jsonObj["error"].toString() : "";
         _Details::_logError(statusCode, errMsg);
     }
+    ip_reply->deleteLater();
 }
 
 //-----------------------------------------------------------------------------
@@ -105,4 +106,5 @@ void WifiHttpClient::_handlePasswordValidation(QNetworkReply *ip_reply)
         _Details::_logError(statusCode, errMsg);
         emit passwordValidatedWithResult(false, errMsg);
     }
+    ip_reply->deleteLater();
 }
