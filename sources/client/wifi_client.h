@@ -20,10 +20,11 @@ public:
 
 signals:
     void networkListUpdated();
+    void passwordValidatedWithResult(bool, const QString &);
 
 private:
-    void _handleNetworkList(const QByteArray &i_data);
-    void _handlePasswordValidation(const QByteArray &i_data);
+    void _handleNetworkList(QNetworkReply *ip_reply);
+    void _handlePasswordValidation(QNetworkReply *ip_reply);
 
 private:
     QStringListModel *mp_model;

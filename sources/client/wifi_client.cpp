@@ -6,8 +6,31 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonValue>
+#include <QNetworkReply>
 
 using namespace Communication;
+
+namespace _Details {
+
+//-----------------------------------------------------------------------------
+static void _logError(int i_statusCode, const QString &i_errMessage)
+{
+    static const QHash<int, QString> _g_error_code_to_msg = {{400, "Bad Request"},
+                                                             {401, "Unauthorized"},
+                                                             {404, "Not Found"},
+                                                             {500, "Internal Server Error"}};
+
+    if (_g_error_code_to_msg.contains(i_statusCode)) {
+        qDebug() << i_statusCode << " " << _g_error_code_to_msg[i_statusCode];
+        if (!i_errMessage.isEmpty())
+            qDebug() << ": " << i_errMessage;
+    } else {
+        qDebug() << "Error: Http Status Code " << i_statusCode;
+        if (!i_errMessage.isEmpty())
+            qDebug() << ", Message: " << i_errMessage;
+    }
+}
+} // namespace _Details
 
 //-----------------------------------------------------------------------------
 WifiHttpClient::WifiHttpClient(const QString &i_hostName,
@@ -26,7 +49,7 @@ QStringListModel *WifiHttpClient::networkModel() const
 //-----------------------------------------------------------------------------
 void WifiHttpClient::requestNetworkList()
 {
-    sendGetRequest(WIFI_NETWORKS, [this](QByteArray i_response) { _handleNetworkList(i_response); });
+    sendGetRequest(WIFI_NETWORKS, [this](QNetworkReply *ip_reply) { _handleNetworkList(ip_reply); });
 }
 
 //-----------------------------------------------------------------------------
@@ -35,42 +58,51 @@ void WifiHttpClient::connectToNetwork(const QString &i_name, const QString &i_pa
     // e.g. jsonObj = {"id": "wifi_1", "auth": "!QAZxsw2#EDCvfr4"}
 
     QJsonObject jsonObj({{"id", i_name}, {"auth", i_password}});
-    sendPostRequest(VALIDATE_WIFI_PWD, std::move(jsonObj), [this](QByteArray i_response) {
-        _handlePasswordValidation(i_response);
+    sendPostRequest(VALIDATE_WIFI_PWD, std::move(jsonObj), [this](QNetworkReply *ip_reply) {
+        _handlePasswordValidation(ip_reply);
     });
 }
 
 //-----------------------------------------------------------------------------
-void WifiHttpClient::_handleNetworkList(const QByteArray &i_data)
+void WifiHttpClient::_handleNetworkList(QNetworkReply *ip_reply)
 {
-    qDebug() << "received raw data: " << i_data;
-    auto jsonDoc = QJsonDocument::fromJson(i_data);
+    QByteArray replyData = ip_reply->readAll();
+    auto jsonDoc = QJsonDocument::fromJson(replyData);
+    auto jsonObj = jsonDoc.object();
 
-    if (jsonDoc.object().contains("error")) {
-        qDebug() << "can't get networks from server";
-        return;
-    }
+    int statusCode = ip_reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    if (statusCode == 200) {
+        if (jsonObj.contains("wifi_ids")) {
+            QStringList networkNames;
+            for (auto &&val : jsonObj["wifi_ids"].toArray())
+                networkNames << val.toString();
 
-    if (jsonDoc.object().contains("wifi_networks")) {
-        QStringList networkNames;
-        for (auto &&val : jsonDoc.object()["wifi_networks"].toArray())
-            networkNames << val.toString();
-
-        qDebug() << "networks received: " << networkNames;
-
-        // update the model
-        mp_model->setStringList(networkNames);
-        emit networkListUpdated();
+            // update the model
+            mp_model->setStringList(networkNames);
+            emit networkListUpdated();
+        } else {
+            qDebug() << "WARNING: Can't retrieve network list";
+        }
+    } else {
+        auto errMsg = jsonObj.contains("error") ? jsonObj["error"].toString() : "";
+        _Details::_logError(statusCode, errMsg);
     }
 }
 
 //-----------------------------------------------------------------------------
-void WifiHttpClient::_handlePasswordValidation(const QByteArray &i_data)
+void WifiHttpClient::_handlePasswordValidation(QNetworkReply *ip_reply)
 {
-    auto jsonDoc = QJsonDocument::fromJson(i_data);
-    if (jsonDoc.object().contains("error")) {
-        qDebug() << jsonDoc.object()["error"].toString();
+    QByteArray responseData = ip_reply->readAll();
+    QJsonDocument jsonDoc = QJsonDocument::fromJson(responseData);
+    QJsonObject jsonObj = jsonDoc.object();
+
+    int statusCode = ip_reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    if (statusCode == 200) {
+        auto msg = jsonObj.contains("message") ? jsonObj["message"].toString() : "";
+        emit passwordValidatedWithResult(true, msg);
     } else {
-        qDebug() << "password validation result: " << i_data;
+        auto errMsg = jsonObj.contains("error") ? jsonObj["error"].toString() : "";
+        _Details::_logError(statusCode, errMsg);
+        emit passwordValidatedWithResult(false, errMsg);
     }
 }

@@ -1,9 +1,12 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 
+#include <QJsonObject>
 #include <QMap>
 #include <QObject>
 #include <QString>
+
+#include <functional>
 
 class QNetworkReply;
 class QNetworkAccessManager;
@@ -16,10 +19,10 @@ class HttpClient : public QObject
 public:
     HttpClient(const QString &i_hostName, quint16 i_port, QObject *ip_parent = nullptr);
 
-    void sendGetRequest(const QString &i_endpoint, std::function<void(QByteArray)> i_callback);
+    void sendGetRequest(const QString &i_endpoint, std::function<void(QNetworkReply *)> i_callback);
     void sendPostRequest(const QString &i_endpoint,
                          QJsonObject i_data,
-                         std::function<void(QByteArray)> i_callback);
+                         std::function<void(QNetworkReply *)> i_callback);
 
 private slots:
     void onResponseReceived(QNetworkReply *ip_reply);
@@ -29,7 +32,7 @@ private:
     QNetworkAccessManager *mp_networkAccessManager;
 
     // map to store replies and their associated request IDs
-    QMap<QNetworkReply *, std::function<void(QByteArray)>> m_requestMap;
+    QMap<QNetworkReply *, std::function<void(QNetworkReply *)>> m_requestMap;
 };
 
 } // namespace Communication

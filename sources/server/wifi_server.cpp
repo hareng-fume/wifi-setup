@@ -78,7 +78,7 @@ void WifiHttpServer::_handleNetworkListRequest(QTcpSocket *ip_socket, const QStr
         responseObj["error"] = "No available Wi-Fi networks found during scanning.";
         status = Status::_BAD_REQUEST;
     } else {
-        responseObj["wifi_networks"] = QJsonArray::fromStringList(m_wifiCredentials.keys());
+        responseObj["wifi_ids"] = QJsonArray::fromStringList(m_wifiCredentials.keys());
         status = Status::_OK;
     }
 

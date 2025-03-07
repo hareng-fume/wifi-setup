@@ -11,6 +11,21 @@ ApplicationWindow {
     property bool networkSelected: false
     property bool readyToConnect: passwordValid && networkSelected
 
+    Connections {
+        target: wifiClient
+        function onPasswordValidatedWithResult(success, message) {
+            wifiImage.source = success ? "qrc:/resources/icons/wifi/wifi_green_64.png" :
+                                         "qrc:/resources/icons/wifi/wifi_red_64.png"
+        }
+    }
+
+    Connections {
+        target: passwordField
+        function onPasswordValidityChanged(valid) {
+            passwordValid = valid
+        }
+    }
+
     header: Rectangle {
         width: parent.width
         height: 50
@@ -30,6 +45,7 @@ ApplicationWindow {
             }
 
             Image {
+                id: wifiImage
                 source: "qrc:/resources/icons/wifi/wifi_default_64.png"
                 width: 40
                 height: 40
@@ -93,12 +109,7 @@ ApplicationWindow {
                 width: parent.width
             }
 
-            Connections {
-                target: passwordField
-                function onPasswordValidityChanged(valid) {
-                    passwordValid = valid
-                }
-            }
+
         }
     }
 

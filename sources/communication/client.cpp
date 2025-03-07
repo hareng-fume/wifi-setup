@@ -24,7 +24,7 @@ HttpClient::HttpClient(const QString &i_hostName, quint16 i_port, QObject *ip_pa
 
 //-----------------------------------------------------------------------------
 void HttpClient::sendGetRequest(const QString &i_endpoint,
-                                std::function<void(QByteArray)> i_callback)
+                                std::function<void(QNetworkReply *)> i_callback)
 {
     QNetworkRequest request(m_baseUrl + i_endpoint);
     auto *p_reply = mp_networkAccessManager->get(request);
@@ -35,7 +35,7 @@ void HttpClient::sendGetRequest(const QString &i_endpoint,
 //-----------------------------------------------------------------------------
 void HttpClient::sendPostRequest(const QString &i_endpoint,
                                  QJsonObject i_jsonObj,
-                                 std::function<void(QByteArray)> i_callback)
+                                 std::function<void(QNetworkReply *)> i_callback)
 {
     QNetworkRequest request(m_baseUrl + i_endpoint);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
@@ -51,7 +51,7 @@ void HttpClient::sendPostRequest(const QString &i_endpoint,
 void HttpClient::onResponseReceived(QNetworkReply *ip_reply)
 {
     if (m_requestMap.contains(ip_reply)) {
-        m_requestMap[ip_reply](ip_reply->readAll());
+        m_requestMap[ip_reply](ip_reply);
         m_requestMap.remove(ip_reply);
     } else {
         qDebug() << "ERROR: no callback registered";
