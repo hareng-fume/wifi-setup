@@ -36,7 +36,7 @@ static void _logError(int i_statusCode, const QString &i_errMessage)
 WifiHttpClient::WifiHttpClient(const QString &i_hostName,
                                quint16 i_port,
                                QObject *ip_parent /*= nullptr*/)
-    : Communication::HttpClient(i_hostName, i_port, ip_parent)
+    : HttpClient(i_hostName, i_port, ip_parent)
     , mp_model(new QStringListModel(this))
 {}
 
@@ -55,10 +55,14 @@ void WifiHttpClient::requestNetworkList()
 //-----------------------------------------------------------------------------
 void WifiHttpClient::connectToNetwork(const QString &i_name, const QString &i_password)
 {
-    // e.g. jsonObj = {"id": "wifi_1", "auth": "!QAZxsw2#EDCvfr4"}
+    QJsonObject jsonObj;
+    jsonObj.insert("id", i_name);
+    jsonObj.insert("auth", i_password);
 
-    QJsonObject jsonObj({{"id", i_name}, {"auth", i_password}});
-    sendPostRequest(VALIDATE_WIFI_PWD, std::move(jsonObj), [this](QNetworkReply *ip_reply) {
+    QJsonDocument doc(jsonObj);
+    QByteArray data = doc.toJson(QJsonDocument::Compact);
+
+    sendPostRequest(VALIDATE_WIFI_PWD, data, [this](QNetworkReply *ip_reply) {
         _handlePasswordValidation(ip_reply);
     });
 }
@@ -66,9 +70,14 @@ void WifiHttpClient::connectToNetwork(const QString &i_name, const QString &i_pa
 //-----------------------------------------------------------------------------
 void WifiHttpClient::_handleNetworkList(QNetworkReply *ip_reply)
 {
+    if (ip_reply->error() != QNetworkReply::NoError) {
+        qDebug() << "ERROR: Can't handle network list";
+        return;
+    }
+
     QByteArray replyData = ip_reply->readAll();
-    auto jsonDoc = QJsonDocument::fromJson(replyData);
-    auto jsonObj = jsonDoc.object();
+    auto jsonDocument = QJsonDocument::fromJson(replyData);
+    auto jsonObj = jsonDocument.object();
 
     int statusCode = ip_reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     if (statusCode == 200) {
@@ -106,5 +115,4 @@ void WifiHttpClient::_handlePasswordValidation(QNetworkReply *ip_reply)
         _Details::_logError(statusCode, errMsg);
         emit passwordValidatedWithResult(false, errMsg);
     }
-    ip_reply->deleteLater();
 }

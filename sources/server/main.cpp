@@ -63,7 +63,7 @@ int main(int argc, char* argv[]) {
     QString host = parser.value("host");
     int port = parser.value("port").toInt();
 
-    WifiHttpServer server;
+    WifiHttpServer server(&app);
     server.loadWifiCredentials(std::move(settings));
     server.start(host, port);
 

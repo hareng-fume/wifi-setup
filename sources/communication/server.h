@@ -1,5 +1,4 @@
-#ifndef SERVER_H
-#define SERVER_H
+#pragma once
 
 #include "settings.h"
 
@@ -16,6 +15,7 @@ inline static constexpr const char *_UNAUTHORIZED = "401 Unauthorized";
 inline static constexpr const char *_BAD_REQUEST = "400 Bad Request";
 inline static constexpr const char *_NOT_FOUND = "404 Not Found";
 } // namespace Status
+
 
 class HttpServer : public QTcpServer
 {
@@ -47,17 +47,17 @@ public:
                       const QByteArray &i_responseData);
 
 protected:
-    //void incomingConnection(qintptr i_socketDescriptor) override;
+    void incomingConnection(qintptr i_socketDescriptor) override;
 
 private slots:
-    void handleNewConnection();
+    void onNewConnection();
+    void onDisconnected();
     void processRequest(QTcpSocket *ip_socket);
 
 private:
     std::unique_ptr<ISettings> mp_settings;
     QMap<QString, std::function<void(QTcpSocket *, const QString &)>> m_routes;
+    QHash<QTcpSocket*, QByteArray> m_buffer;
 };
 
 } // namespace Communication
-
-#endif // SERVER_H

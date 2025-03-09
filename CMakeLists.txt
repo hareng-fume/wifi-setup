@@ -10,8 +10,8 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Quick)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Quick)
+# Find Qt5 components
+find_package(Qt5 REQUIRED COMPONENTS Core Quick)
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     message(STATUS "Using GCC, adding compile warning options")

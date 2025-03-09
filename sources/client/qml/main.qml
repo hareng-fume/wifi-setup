@@ -1,10 +1,10 @@
-import QtQuick
-import QtQuick.Controls
+import QtQuick 2.15
+import QtQuick.Controls 2.15
 
 ApplicationWindow {
     visible: true
     width: 360
-    height: 640
+    height: 480
     title: "WiFi Setup"
 
     property bool passwordValid: false
@@ -76,6 +76,7 @@ ApplicationWindow {
                 width: parent.width
                 model: wifiClient.networkModel
                 textRole: "display"
+                font.pointSize: 14
 
                 contentItem: Text {
                     text: parent.displayText
@@ -124,6 +125,7 @@ ApplicationWindow {
             height: parent.height
 
             Image {
+                id: userImage
                 source: "qrc:/resources/icons/user/user_64.png"
                 x: connectButton.x - width-10
                 width: 35
@@ -138,9 +140,18 @@ ApplicationWindow {
                 enabled: readyToConnect
                 text: "Connect"
                 width: 80
-                height: parent.height-10
+                height: userImage.height
                 x: parent.width-width-10
                 anchors.verticalCenter: parent.verticalCenter
+
+                background: Rectangle {
+                    color: "white"
+                    //border.color: "#0078D7"  // Blue border
+                    border.color: "grey"
+                    border.width: 1
+                    radius: 8  // Rounded corners
+                    layer.enabled: true
+                }
 
                 onClicked: wifiClient.connectToNetwork(networkSelector.currentText
                                                        , passwordField.password)

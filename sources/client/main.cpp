@@ -5,8 +5,6 @@
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 
-// ./client_app.exe --host 127.0.0.1 --port 8080
-
 int main(int argc, char *argv[])
 {
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
@@ -25,10 +23,9 @@ int main(int argc, char *argv[])
     parser.process(app);
 
     QString host = parser.value("host");
-    int port = parser.value("port").toInt();
+    quint16 port = parser.value("port").toUShort();
 
-    // create Http Wi-Fi client
-    WifiHttpClient wifiClient(host, port);
+    WifiHttpClient wifiClient(host, port, &app);
 
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty("wifiClient", &wifiClient);

@@ -32,8 +32,8 @@ static QJsonObject _extractJSONPayload(const QString &i_httpRequestStr)
 } // namespace _Details
 
 //-----------------------------------------------------------------------------
-WifiHttpServer::WifiHttpServer()
-    : HttpServer()
+WifiHttpServer::WifiHttpServer(QObject *ip_parent /*= nullptr*/)
+    : HttpServer(ip_parent)
 {
     route(WIFI_NETWORKS, [this](QTcpSocket *ip_socket, const QString &i_requestStr) {
         _handleNetworkListRequest(ip_socket, i_requestStr);
@@ -87,10 +87,13 @@ void WifiHttpServer::_handleNetworkListRequest(QTcpSocket *ip_socket, const QStr
 }
 
 //-----------------------------------------------------------------------------
-void WifiHttpServer::_handleAuthenticationRequest(QTcpSocket *ip_socket, const QString &i_requestStr)
+void WifiHttpServer::_handleAuthenticationRequest(QTcpSocket *ip_socket,
+                                                  const QString &i_requestStr)
 {
     QJsonObject responseObj;
     QString status;
+
+    qDebug() << "\nauth request: " << i_requestStr;
 
     auto requestJsonObj = _Details::_extractJSONPayload(i_requestStr);
     if (requestJsonObj.isEmpty()) {
@@ -123,6 +126,9 @@ void WifiHttpServer::_handleAuthenticationRequest(QTcpSocket *ip_socket, const Q
         }
     }
 
-    QByteArray responseData = QJsonDocument(responseObj).toJson(QJsonDocument::Indented);
+    QByteArray responseData = QJsonDocument(responseObj).toJson(QJsonDocument::Compact);
+    qDebug() << "auth response: " << QString::fromUtf8(responseData);
+
+
     sendResponse(ip_socket, status, responseData);
 }

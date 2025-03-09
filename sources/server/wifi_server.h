@@ -9,7 +9,7 @@
 class WifiHttpServer : public Communication::HttpServer
 {
 public:
-    WifiHttpServer();
+    explicit WifiHttpServer(QObject *ip_parent = nullptr);
     void loadWifiCredentials(QJsonObject &&i_settings);
 
 private:

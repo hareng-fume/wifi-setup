@@ -21,6 +21,21 @@ static QString extractPath(const QString &i_request)
     return requestLine.size() > 1 ? requestLine[1] : "/";
 }
 
+//-----------------------------------------------------------------------------
+static bool requestIsComplete(const QByteArray &data) {
+    int headerEnd = data.indexOf("\r\n\r\n");
+    if (headerEnd == -1)
+        return false; // headers not fully received
+
+    int contentLength = 0;
+    QRegExp regex("Content-Length: (\\d+)");
+    if (regex.indexIn(data) != -1)
+        contentLength = regex.cap(1).toInt();
+
+    int totalExpectedSize = headerEnd + 4 + contentLength; // 4 = \r\n\r\n
+    return data.size() >= totalExpectedSize;
+}
+
 } // namespace _Details
 
 namespace Communication {
@@ -29,65 +44,59 @@ namespace Communication {
 HttpServer::HttpServer(QObject *ip_parent /*= nullptr*/)
     : QTcpServer(ip_parent)
 {
-    connect(this, &QTcpServer::newConnection, this, &HttpServer::handleNewConnection);
+    connect(this, &QTcpServer::newConnection, this, &HttpServer::onNewConnection);
 }
 
 //-----------------------------------------------------------------------------
-/*void HttpServer::incomingConnection(qintptr i_socketDescriptor)
+void HttpServer::incomingConnection(qintptr i_socketDescriptor)
 {
-    QTcpSocket *clientSocket = new QTcpSocket(this);
-    clientSocket->setSocketDescriptor(i_socketDescriptor);
-    connect(clientSocket, &QTcpSocket::readyRead, this, [clientSocket]() {
-        QByteArray requestData = clientSocket->readAll();
-        qDebug() << "Received request:\n" << requestData;
-
-        // Prepare JSON response
-        QJsonArray wifiArray;
-        wifiArray.append(QJsonObject{{"id", "wifi_1"}, {"auth", "!QAZxsw2#EDCvfr4"}});
-        wifiArray.append(QJsonObject{{"id", "wifi_2"}, {"auth", "vgy7*UHBnji9)OKLM"}});
-
-        QJsonObject responseObj;
-        responseObj["wifi_params"] = wifiArray;
-        QByteArray responseData = QJsonDocument(responseObj).toJson(QJsonDocument::Indented);
-
-        // Prepare HTTP response headers
-        QByteArray httpResponse = "HTTP/1.1 200 OK\r\n"
-                                  "Content-Type: application/json\r\n"
-                                  "Content-Length: "
-                                  + QByteArray::number(responseData.size())
-                                  + "\r\n"
-                                    "Connection: close\r\n\r\n"
-                                  + responseData;
-
-        clientSocket->write(httpResponse);
-        clientSocket->flush();
-        clientSocket->disconnectFromHost();
-    });
-}*/
+    auto* p_socket = new QTcpSocket(this);
+    p_socket->setSocketDescriptor(i_socketDescriptor);
+    addPendingConnection(p_socket);
+}
 
 //-----------------------------------------------------------------------------
-void HttpServer::handleNewConnection()
+void HttpServer::onNewConnection()
 {
     auto *p_socket = nextPendingConnection();
+    if (!p_socket) {
+        qDebug() << "Warning: " << "no next pending connection";
+        return;
+    }
+
+    qDebug() << "New connection - is emitted once for every client that connects";
+
+    // use p_socket to communicate with the client
     connect(p_socket, &QTcpSocket::readyRead, p_socket, [this, p_socket]() {
         processRequest(p_socket);
     });
-    connect(p_socket, &QTcpSocket::disconnected, p_socket, &QTcpSocket::deleteLater);
+    connect(p_socket, &QTcpSocket::disconnected, this, &HttpServer::onDisconnected);
+}
+
+//-----------------------------------------------------------------------------
+void HttpServer::onDisconnected() {
+    auto* p_socket = qobject_cast<QTcpSocket*>(sender());
+    if (p_socket){
+        p_socket->close();
+        p_socket->deleteLater();
+    }
 }
 
 //-----------------------------------------------------------------------------
 void HttpServer::processRequest(QTcpSocket *ip_socket)
 {
-    auto requestData = ip_socket->readAll();
-    auto requestStr = QString::fromUtf8(requestData);
+    m_buffer[ip_socket] += ip_socket->readAll();
 
-    qDebug() << "Received request:\n" << requestStr;
-
-    auto path = _Details::extractPath(requestStr);
-    if (m_routes.contains(path)) {
-        m_routes[path](ip_socket, requestStr);
-    } else {
-        sendResponse(ip_socket, "404 Not Found", "Page not found");
+    if (_Details::requestIsComplete(m_buffer[ip_socket])) {
+        auto requestStr = QString::fromUtf8(m_buffer[ip_socket]);
+        qDebug() << "request is complete: " << requestStr;
+        auto path = _Details::extractPath(requestStr);
+        if (m_routes.contains(path)) {
+            m_routes[path](ip_socket, requestStr);
+        } else {
+            sendResponse(ip_socket, "404 Not Found", "Page not found");
+        }
+        m_buffer.remove(ip_socket);
     }
 }
 
@@ -107,6 +116,7 @@ void HttpServer::sendResponse(QTcpSocket *ip_socket,
                               + i_responseData;
     ip_socket->write(httpResponse);
     ip_socket->flush();
+    ip_socket->waitForBytesWritten(3000);
     ip_socket->disconnectFromHost();
 }
 
@@ -127,7 +137,7 @@ void HttpServer::start(const QString &i_address, quint16 i_port /*= 8080*/)
     }
 
     if (!listen(hostAddress, i_port))
-        qDebug() << "Server failed to start!";
+        qDebug() << "Server failed to start! " << errorString();
     else
         qDebug() << "Server listening on " << i_address << ", port " << i_port << "...";
 }

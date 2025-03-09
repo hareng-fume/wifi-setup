@@ -1,5 +1,4 @@
-#ifndef CLIENT_H
-#define CLIENT_H
+#pragma once
 
 #include <QJsonObject>
 #include <QMap>
@@ -17,15 +16,18 @@ class HttpClient : public QObject
 {
     Q_OBJECT
 public:
+    explicit HttpClient(QObject* ip_parent = nullptr);
     HttpClient(const QString &i_hostName, quint16 i_port, QObject *ip_parent = nullptr);
+
+    void setBaseUrl(const QString& i_baseUrl);
 
     void sendGetRequest(const QString &i_endpoint, std::function<void(QNetworkReply *)> i_callback);
     void sendPostRequest(const QString &i_endpoint,
-                         QJsonObject i_data,
+                         const QByteArray& i_data,
                          std::function<void(QNetworkReply *)> i_callback);
 
 private slots:
-    void onResponseReceived(QNetworkReply *ip_reply);
+    void onFinished();
 
 private:
     QString m_baseUrl; // store predefined host and port
@@ -36,5 +38,3 @@ private:
 };
 
 } // namespace Communication
-
-#endif // CLIENT_H
