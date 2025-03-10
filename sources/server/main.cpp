@@ -1,14 +1,12 @@
 #include "wifi_server.h"
+
 #include <communication/wifi_api.h>
 
-#include <QCommandLineOption>
 #include <QCommandLineParser>
 #include <QCoreApplication>
 #include <QFile>
-#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QStringList>
 
 using namespace Communication;
 
@@ -23,8 +21,8 @@ static QJsonObject loadJson(const QString &i_path)
         return {};
     }
 
-    QByteArray jsonData = file.readAll();
-    QJsonDocument jsonDoc = QJsonDocument::fromJson(jsonData);
+    auto jsonData = file.readAll();
+    auto jsonDoc = QJsonDocument::fromJson(jsonData);
     if (!jsonDoc.isObject()) {
         qCritical() << "Invalid JSON format in file: " << i_path;
         return {};
@@ -34,14 +32,12 @@ static QJsonObject loadJson(const QString &i_path)
 }
 } // namespace _Details
 
-// ./server_app.exe --host 127.0.0.1 --port 8080 --config ./settings.json
+// <app>.exe --host 127.0.0.1 --port 8080 --config ./settings.json
 int main(int argc, char* argv[]) {
     QCoreApplication app(argc, argv);
 
     QCommandLineParser parser;
     parser.setApplicationDescription("HTTP Server for WiFi Management");
-
-    // add the help option (automatically adds --help to the options)
     parser.addHelpOption();
 
     parser.addOption({"config", "Path to the settings JSON file", "config"});
@@ -50,15 +46,15 @@ int main(int argc, char* argv[]) {
     parser.process(app);
 
     if (!parser.isSet("config")) {
-        qCritical() << "Missing required argument: --config <path_json>";
-        parser.showHelp(1); // exits with error
+        qCritical() << "Missing required argument: --config <path_to_json>";
+        parser.showHelp(EXIT_FAILURE); // exits with error
     }
 
     auto configPath = parser.value("config");
     auto settings = _Details::loadJson(configPath);
     if (settings.isEmpty()) {
         qCritical() << "Failed to load config settings.";
-        return 1;
+        return EXIT_FAILURE;
     }
 
     QString host = parser.value("host");

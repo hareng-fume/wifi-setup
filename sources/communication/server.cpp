@@ -127,7 +127,7 @@ void HttpServer::route(const QString& i_endpoint, TRequestCallback i_callback)
 }
 
 //-----------------------------------------------------------------------------
-void HttpServer::start(const QString& i_address, quint16 i_port /*= 8080*/)
+void HttpServer::start(const QString& i_address, quint16 i_port)
 {
     QHostAddress hostAddress;
     if (!hostAddress.setAddress(i_address)) {

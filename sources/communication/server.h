@@ -18,7 +18,7 @@ class HttpServer : public QTcpServer
 public:
     explicit HttpServer(QObject* ip_parent = nullptr);
 
-    void start(const QString& i_address, quint16 i_port = 8080);
+    void start(const QString& i_address, quint16 i_port);
     void route(const QString& i_endpoint, TRequestCallback i_callback);
     void sendResponse(QTcpSocket* ip_socket, const QString& i_status,
         const QByteArray& i_data);

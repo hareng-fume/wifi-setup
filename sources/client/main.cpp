@@ -13,9 +13,7 @@ int main(int argc, char *argv[])
     QGuiApplication app(argc, argv);
 
     QCommandLineParser parser;
-    parser.setApplicationDescription("Client for the HTTP server");
-
-    // add the help option (automatically adds --help to the options)
+    parser.setApplicationDescription("HTTP Client for WiFi Management");
     parser.addHelpOption();
 
     parser.addOption({"host", "Host address for the client", "host", "127.0.0.1"});
