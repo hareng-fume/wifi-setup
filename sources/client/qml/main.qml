@@ -11,6 +11,26 @@ ApplicationWindow {
     property bool networkSelected: false
     property bool readyToConnect: passwordValid && networkSelected
 
+    function updateWifiImage() {
+        if (networkSelector.currentIndex === -1) {
+            wifiImage.source = "qrc:/resources/icons/wifi/wifi_default_64.png"
+            return
+        }
+
+        var selectedNetwork = wifiClient.wifiModel.get(networkSelector.currentIndex);
+        console.log("name: ", selectedNetwork.name, ", status: ", selectedNetwork.status)
+        switch (selectedNetwork.status) {
+            case 1: // ConnectionStatus.Connected
+                wifiImage.source = "qrc:/resources/icons/wifi/wifi_green_64.png"
+                break
+            case 2: // ConnectionStatus.FailedToConnect
+                wifiImage.source = "qrc:/resources/icons/wifi/wifi_red_64.png"
+                break
+            default:
+                wifiImage.source = "qrc:/resources/icons/wifi/wifi_default_64.png"
+        }
+    }
+
     Connections {
         target: passwordField
         function onPasswordValidityChanged(valid) {
@@ -20,23 +40,8 @@ ApplicationWindow {
 
     Connections {
         target: wifiClient.wifiModel
-        function onDataChanged(topLeft, rightBottom, roles) {
-            if (networkSelector.currentIndex !== -1) {
-                var selectedNetwork = wifiClient.wifiModel.get(networkSelector.currentIndex);
-                var connectionStatus = selectedNetwork.status;
-                console.log("network: ", selectedNetwork.name, ", status: ", connectionStatus)
-                switch (connectionStatus) {
-                    case 1: // ConnectionStatus.Connected
-                        wifiImage.source = "qrc:/resources/icons/wifi/wifi_green_64.png";
-                        break
-                    case 2: // ConnectionStatus.FailedToConnect
-                        wifiImage.source = "qrc:/resources/icons/wifi/wifi_red_64.png";
-                        break
-                    default:
-                        wifiImage.source = "qrc:/resources/icons/wifi/wifi_default_64.png";
-                        break
-                }
-            }
+        onDataChanged: {
+            updateWifiImage()
         }
     }
 
@@ -100,6 +105,7 @@ ApplicationWindow {
                 onCurrentIndexChanged: {
                     if (networkSelector.currentIndex !== -1 && !networkSelected)
                         networkSelected = true
+                    updateWifiImage()
                 }
             }
 
