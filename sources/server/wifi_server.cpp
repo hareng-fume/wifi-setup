@@ -1,11 +1,11 @@
 #include "wifi_server.h"
 
-#include <communication/settings.h>
 #include <communication/wifi_api.h>
 
 #include <QDebug>
 #include <QFile>
 #include <QJsonArray>
+#include <QJsonDocument>
 #include <QJsonObject>
 #include <QString>
 
