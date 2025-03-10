@@ -76,10 +76,10 @@ void WifiHttpServer::_handleNetworkListRequest(QTcpSocket *ip_socket, const QStr
 
     if (m_wifiCredentials.isEmpty()) {
         responseObj["error"] = "No available Wi-Fi networks found during scanning.";
-        status = Status::_BAD_REQUEST;
+        status = Status::BAD_REQUEST;
     } else {
         responseObj["wifi_ids"] = QJsonArray::fromStringList(m_wifiCredentials.keys());
-        status = Status::_OK;
+        status = Status::OK;
     }
 
     auto responseData = QJsonDocument(responseObj).toJson();
@@ -98,30 +98,30 @@ void WifiHttpServer::_handleAuthenticationRequest(QTcpSocket *ip_socket,
     auto requestJsonObj = _Details::_extractJSONPayload(i_requestStr);
     if (requestJsonObj.isEmpty()) {
         responseObj["error"] = "Invalid or impossible to extract JSON";
-        status = Status::_BAD_REQUEST;
+        status = Status::BAD_REQUEST;
     } else {
         // request example: {"id": "wifi_1", "auth": "!QAZxsw2#EDCvfr4"}
 
         if (!requestJsonObj.contains("id") || requestJsonObj["id"].toString().isEmpty()) {
             responseObj["error"] = "Missing or invalid 'id' parameter";
-            status = Status::_BAD_REQUEST;
+            status = Status::BAD_REQUEST;
         } else if (!requestJsonObj.contains("auth") || requestJsonObj["auth"].toString().isEmpty()) {
             responseObj["error"] = "Missing or invalid 'auth' parameter";
-            status = Status::_BAD_REQUEST;
+            status = Status::BAD_REQUEST;
         } else {
             auto networkId = requestJsonObj["id"].toString();
             auto networkPass = requestJsonObj["auth"].toString();
             if (m_wifiCredentials.contains(networkId)) {
                 if (m_wifiCredentials[networkId] == networkPass) {
                     responseObj["message"] = QString("Accepted connection to '%1'").arg(networkId);
-                    status = Status::_OK;
+                    status = Status::OK;
                 } else {
                     responseObj["error"] = "Wrong password";
-                    status = Status::_UNAUTHORIZED;
+                    status = Status::UNAUTHORIZED;
                 }
             } else {
                 responseObj["error"] = QString("Network '%1' not found").arg(networkId);
-                status = Status::_NOT_FOUND; // 404
+                status = Status::NOT_FOUND; // 404
             }
         }
     }

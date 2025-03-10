@@ -16,18 +16,9 @@ using namespace Communication;
 namespace _Details {
 
 //-----------------------------------------------------------------------------
-static const QHash<int, QString> _codeToMsg = {
-    {200, "Ok"},
-    {400, "Bad Request"},
-    {401, "Unauthorized"},
-    {404, "Not Found"},
-    {500, "Internal Server Error"}
-};
-
-//-----------------------------------------------------------------------------
 static void _logError(int i_statusCode, const QString& i_errMessage) {
     auto errorMsg = QString("Status Code: %1, %2").arg(QString::number(i_statusCode),
-                _codeToMsg.value(i_statusCode, "Unknown Error"));
+                Status::getMessageFrom(i_statusCode));
 
     if (!i_errMessage.isEmpty())
         errorMsg += " - " + i_errMessage;
@@ -41,7 +32,7 @@ static void _logError(int i_statusCode, const QString& i_errMessage) {
 //-----------------------------------------------------------------------------
 static void _logInfo(int i_statusCode, const QString& i_message) {
     auto message = QString("Status Code: %1, %2").arg(QString::number(i_statusCode),
-                _codeToMsg.value(i_statusCode, "Unknown Code"));
+                Status::getMessageFrom(i_statusCode));
     if (!i_message.isEmpty())
         message += " - " + i_message;
     qInfo() << message;

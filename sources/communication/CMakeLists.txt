@@ -1,10 +1,9 @@
 add_library(communication STATIC
   client.cpp
   client.h
-  server.h
   server.cpp
-  settings.h
-  settings.cpp
+  server.h
+  wifi_api.cpp
   wifi_api.h
 )
 
