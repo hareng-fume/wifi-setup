@@ -1,18 +1,18 @@
 #include "server.h"
+#include "wifi_api.h"
 
-#include <QCoreApplication>
 #include <QDebug>
 #include <QHostAddress>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QString>
 #include <QTcpSocket>
+#include <QRegExp>
 
 namespace _Details {
 
 //-----------------------------------------------------------------------------
-static QString extractPath(const QString &i_request)
+static QString extractPath(const QString& i_request)
 {
     auto lines = i_request.split("\r\n");
     if (lines.isEmpty())
@@ -22,18 +22,18 @@ static QString extractPath(const QString &i_request)
 }
 
 //-----------------------------------------------------------------------------
-static bool requestIsComplete(const QByteArray &data) {
-    int headerEnd = data.indexOf("\r\n\r\n");
+static bool requestIsComplete(const QByteArray& i_data) {
+    auto headerEnd = i_data.indexOf("\r\n\r\n");
     if (headerEnd == -1)
         return false; // headers not fully received
 
     int contentLength = 0;
     QRegExp regex("Content-Length: (\\d+)");
-    if (regex.indexIn(data) != -1)
+    if (regex.indexIn(i_data) != -1)
         contentLength = regex.cap(1).toInt();
 
     int totalExpectedSize = headerEnd + 4 + contentLength; // 4 = \r\n\r\n
-    return data.size() >= totalExpectedSize;
+    return i_data.size() >= totalExpectedSize;
 }
 
 } // namespace _Details
@@ -41,7 +41,7 @@ static bool requestIsComplete(const QByteArray &data) {
 namespace Communication {
 
 //-----------------------------------------------------------------------------
-HttpServer::HttpServer(QObject *ip_parent /*= nullptr*/)
+HttpServer::HttpServer(QObject* ip_parent /*= nullptr*/)
     : QTcpServer(ip_parent)
 {
     connect(this, &QTcpServer::newConnection, this, &HttpServer::onNewConnection);
@@ -60,16 +60,11 @@ void HttpServer::onNewConnection()
 {
     auto *p_socket = nextPendingConnection();
     if (!p_socket) {
-        qDebug() << "Warning: " << "no next pending connection";
+        qWarning() << "WARNING: no next pending connection";
         return;
     }
 
-    qDebug() << "New connection - is emitted once for every client that connects";
-
-    // use p_socket to communicate with the client
-    connect(p_socket, &QTcpSocket::readyRead, p_socket, [this, p_socket]() {
-        processRequest(p_socket);
-    });
+    connect(p_socket, &QTcpSocket::readyRead, this, &HttpServer::onReadyRead);
     connect(p_socket, &QTcpSocket::disconnected, this, &HttpServer::onDisconnected);
 }
 
@@ -83,37 +78,42 @@ void HttpServer::onDisconnected() {
 }
 
 //-----------------------------------------------------------------------------
-void HttpServer::processRequest(QTcpSocket *ip_socket)
-{
-    m_buffer[ip_socket] += ip_socket->readAll();
+void HttpServer::onReadyRead() {
+    auto* p_socket = qobject_cast<QTcpSocket*>(sender());
+    if (!p_socket) {
+        qWarning() << "WARNING: sender() is not a valid QTcpSocket";
+        return;
+    }
 
-    if (_Details::requestIsComplete(m_buffer[ip_socket])) {
-        auto requestStr = QString::fromUtf8(m_buffer[ip_socket]);
-        qDebug() << "request is complete: " << requestStr;
+    m_buffer[p_socket] += p_socket->readAll();
+
+    if (_Details::requestIsComplete(m_buffer[p_socket])) {
+        auto requestStr = QString::fromUtf8(m_buffer[p_socket]);
         auto path = _Details::extractPath(requestStr);
         if (m_routes.contains(path)) {
-            m_routes[path](ip_socket, requestStr);
+            m_routes[path](p_socket, requestStr);
         } else {
-            sendResponse(ip_socket, "404 Not Found", "Page not found");
+            sendResponse(p_socket, Status::NOT_FOUND, "Not found");
         }
-        m_buffer.remove(ip_socket);
+
+        m_buffer.remove(p_socket);
     }
 }
 
 //-----------------------------------------------------------------------------
-void HttpServer::sendResponse(QTcpSocket *ip_socket,
-                              const QString &i_status,
-                              const QByteArray &i_responseData)
+void HttpServer::sendResponse(QTcpSocket* ip_socket,
+                              const QString& i_status,
+                              const QByteArray& i_data)
 {
     // prepare HTTP response headers
     QByteArray httpResponse = "HTTP/1.1 " + i_status.toUtf8()
                               + "\r\n"
                                 "Content-Type: application/json\r\n"
                                 "Content-Length: "
-                              + QByteArray::number(i_responseData.size())
+                              + QByteArray::number(i_data.size())
                               + "\r\n"
                                 "Connection: close\r\n\r\n"
-                              + i_responseData;
+                              + i_data;
     ip_socket->write(httpResponse);
     ip_socket->flush();
     ip_socket->waitForBytesWritten(3000);
@@ -121,14 +121,13 @@ void HttpServer::sendResponse(QTcpSocket *ip_socket,
 }
 
 //-----------------------------------------------------------------------------
-void HttpServer::route(const QString &i_endpoint,
-                       std::function<void(QTcpSocket *, const QString &)> i_callback)
+void HttpServer::route(const QString& i_endpoint, TRequestCallback i_callback)
 {
     m_routes[i_endpoint] = i_callback;
 }
 
 //-----------------------------------------------------------------------------
-void HttpServer::start(const QString &i_address, quint16 i_port /*= 8080*/)
+void HttpServer::start(const QString& i_address, quint16 i_port /*= 8080*/)
 {
     QHostAddress hostAddress;
     if (!hostAddress.setAddress(i_address)) {
@@ -137,9 +136,9 @@ void HttpServer::start(const QString &i_address, quint16 i_port /*= 8080*/)
     }
 
     if (!listen(hostAddress, i_port))
-        qDebug() << "Server failed to start! " << errorString();
+        qCritical() << "Server failed to start! " << errorString();
     else
-        qDebug() << "Server listening on " << i_address << ", port " << i_port << "...";
+        qInfo() << "Server listening on " << i_address << ", port " << i_port << "...";
 }
 
 } // namespace Communication
