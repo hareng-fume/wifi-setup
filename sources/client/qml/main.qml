@@ -153,8 +153,8 @@ ApplicationWindow {
                     layer.enabled: true
                 }
 
-                onClicked: wifiClient.connectToNetwork(networkSelector.currentText
-                                                       , passwordField.password)
+                onClicked: wifiClient.requestValidatePassword(
+                               networkSelector.currentText, passwordField.password)
             }
         } // Row
 

@@ -1,33 +1,37 @@
-#ifndef WIFI_CLIENT_H
-#define WIFI_CLIENT_H
+#pragma once
 
-#include <client.h>
+#include <communication/client.h>
 
 #include <QStringListModel>
+
+class QNetworkReply;
 
 class WifiHttpClient : public Communication::HttpClient
 {
     Q_OBJECT
-    Q_PROPERTY(QStringListModel *networkModel READ networkModel NOTIFY networkListUpdated)
+    Q_PROPERTY(QStringListModel* networkModel READ networkModel NOTIFY networkListUpdated)
 
 public:
-    WifiHttpClient(const QString &i_hostName, quint16 i_port, QObject *ip_parent = nullptr);
+    WifiHttpClient(const QString& i_hostName, quint16 i_port, QObject* ip_parent = nullptr);
 
-    QStringListModel *networkModel() const;
+    QStringListModel* networkModel() const;
 
     Q_INVOKABLE void requestNetworkList();
-    Q_INVOKABLE void connectToNetwork(const QString &i_name, const QString &i_password);
+    Q_INVOKABLE void requestValidatePassword(const QString& i_networkName, const QString& i_password);
 
 signals:
     void networkListUpdated();
-    void passwordValidatedWithResult(bool, const QString &);
+    void passwordValidatedWithResult(bool, const QString&);
 
 private:
-    void _handleNetworkList(QNetworkReply *ip_reply);
-    void _handlePasswordValidation(QNetworkReply *ip_reply);
+    std::optional<std::pair<int, QJsonObject>> _handleReply(QNetworkReply* ip_reply);
+
+    void _handleNetworkList(QNetworkReply* ip_reply);
+    void _handlePasswordValidation(QNetworkReply* ip_reply);
+
+    void _processNetworkList(int i_statusCode, const QJsonObject& i_jsonObj);
+    void _processPasswordValidation(int i_statusCode, const QJsonObject& i_jsonObj);
 
 private:
     QStringListModel *mp_model;
 };
-
-#endif // WIFI_CLIENT_H

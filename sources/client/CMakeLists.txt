@@ -12,5 +12,5 @@ target_link_libraries(wifisetup PRIVATE
     communication Qt5::Core Qt5::Quick)
 
 target_include_directories(wifisetup PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/../communication
+    ${CMAKE_CURRENT_SOURCE_DIR}/..
 )

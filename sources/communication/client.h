@@ -1,6 +1,7 @@
 #pragma once
 
-#include <QJsonObject>
+#include "wifi_api.h"
+
 #include <QMap>
 #include <QObject>
 #include <QString>
@@ -15,26 +16,23 @@ namespace Communication {
 class HttpClient : public QObject
 {
     Q_OBJECT
+
+    using TReplyCallback = std::function<void(QNetworkReply*)>;
+
 public:
-    explicit HttpClient(QObject* ip_parent = nullptr);
-    HttpClient(const QString &i_hostName, quint16 i_port, QObject *ip_parent = nullptr);
+    HttpClient(const QString& i_hostName, quint16 i_port, QObject* ip_parent = nullptr);
 
-    void setBaseUrl(const QString& i_baseUrl);
-
-    void sendGetRequest(const QString &i_endpoint, std::function<void(QNetworkReply *)> i_callback);
-    void sendPostRequest(const QString &i_endpoint,
-                         const QByteArray& i_data,
-                         std::function<void(QNetworkReply *)> i_callback);
+    void sendRequest(HttpMethod i_method, const QString& i_endpoint,
+                     const QByteArray& i_data = QByteArray(), TReplyCallback i_callback = nullptr);
 
 private slots:
     void onFinished();
 
 private:
-    QString m_baseUrl; // store predefined host and port
-    QNetworkAccessManager *mp_networkAccessManager;
+    QString m_baseUrl;
+    QNetworkAccessManager* mp_networkAccessManager;
 
-    // map to store replies and their associated request IDs
-    QMap<QNetworkReply *, std::function<void(QNetworkReply *)>> m_requestMap;
+    QMap<QNetworkReply*, TReplyCallback> m_requestMap;
 };
 
 } // namespace Communication
