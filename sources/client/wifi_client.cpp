@@ -53,11 +53,11 @@ WifiHttpClient::WifiHttpClient(const QString& i_hostName,
                                quint16 i_port,
                                QObject* ip_parent /*= nullptr*/)
     : HttpClient(i_hostName, i_port, ip_parent)
-    , mp_model(new QStringListModel(this))
+    , mp_model(new WifiNetworkModel(this))
 {}
 
 //-----------------------------------------------------------------------------
-QStringListModel *WifiHttpClient::networkModel() const
+WifiNetworkModel* WifiHttpClient::wifiModel() const
 {
     return mp_model;
 }
@@ -122,12 +122,12 @@ void WifiHttpClient::_processNetworkList(int i_statusCode, const QJsonObject& i_
             return;
         }
 
-        QStringList networkNames;
+        WifiNetworkModel::ItemList networkList;
         for (auto&& val : i_jsonObj["wifi_ids"].toArray())
-            networkNames << val.toString();
+            networkList << WifiNetworkModel::Item(val.toString(), WifiNetwork::Disconnected);
 
-        mp_model->setStringList(networkNames);
-        emit networkListUpdated();
+        mp_model->resetItems(networkList);
+        emit wifiModelChanged();
     }
 
     _Details::_log(i_statusCode, i_jsonObj);
@@ -139,8 +139,10 @@ void WifiHttpClient::_processPasswordValidation(int i_statusCode, const QJsonObj
     const auto result = i_statusCode == 200 ?
                 std::make_pair(true, i_jsonObj.value("message").toString()):
                 std::make_pair(false, i_jsonObj.value("error").toString());
-    emit passwordValidatedWithResult(result.first, result.second);
 
+    auto connectionStatus = result.first ? WifiNetwork::Connected :
+                                           WifiNetwork::FailedToConnect;
+    mp_model->setConnectionStatus(i_jsonObj.value("id").toString(), connectionStatus);
     _Details::_log(i_statusCode, i_jsonObj);
 }
 

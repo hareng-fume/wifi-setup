@@ -12,17 +12,31 @@ ApplicationWindow {
     property bool readyToConnect: passwordValid && networkSelected
 
     Connections {
-        target: wifiClient
-        function onPasswordValidatedWithResult(success, message) {
-            wifiImage.source = success ? "qrc:/resources/icons/wifi/wifi_green_64.png" :
-                                         "qrc:/resources/icons/wifi/wifi_red_64.png"
+        target: passwordField
+        function onPasswordValidityChanged(valid) {
+            passwordValid = valid
         }
     }
 
     Connections {
-        target: passwordField
-        function onPasswordValidityChanged(valid) {
-            passwordValid = valid
+        target: wifiClient.wifiModel
+        function onDataChanged(topLeft, rightBottom, roles) {
+            if (networkSelector.currentIndex !== -1) {
+                var selectedNetwork = wifiClient.wifiModel.get(networkSelector.currentIndex);
+                var connectionStatus = selectedNetwork.status;
+                console.log("network: ", selectedNetwork.name, ", status: ", connectionStatus)
+                switch (connectionStatus) {
+                    case 1: // ConnectionStatus.Connected
+                        wifiImage.source = "qrc:/resources/icons/wifi/wifi_green_64.png";
+                        break
+                    case 2: // ConnectionStatus.FailedToConnect
+                        wifiImage.source = "qrc:/resources/icons/wifi/wifi_red_64.png";
+                        break
+                    default:
+                        wifiImage.source = "qrc:/resources/icons/wifi/wifi_default_64.png";
+                        break
+                }
+            }
         }
     }
 
@@ -46,14 +60,13 @@ ApplicationWindow {
 
             Image {
                 id: wifiImage
-                source: "qrc:/resources/icons/wifi/wifi_default_64.png"
                 width: 40
                 height: 40
                 x: parent.width-2*width
                 anchors.verticalCenter: parent.verticalCenter
-            }
-        }
-
+                source: "qrc:/resources/icons/wifi/wifi_default_64.png"
+            } // Image
+        } // Row
     } // header
 
     Column {
@@ -74,9 +87,9 @@ ApplicationWindow {
             ComboBox {
                 id: networkSelector
                 width: parent.width
-                model: wifiClient.networkModel
+                model: wifiClient.wifiModel
                 textRole: "display"
-                font.pointSize: 14
+                valueRole: "connection"
 
                 contentItem: Text {
                     text: parent.displayText
@@ -109,8 +122,6 @@ ApplicationWindow {
                 id: passwordField
                 width: parent.width
             }
-
-
         }
     }
 
@@ -146,7 +157,6 @@ ApplicationWindow {
 
                 background: Rectangle {
                     color: "white"
-                    //border.color: "#0078D7"  // Blue border
                     border.color: "grey"
                     border.width: 1
                     radius: 8  // Rounded corners
@@ -157,9 +167,5 @@ ApplicationWindow {
                                networkSelector.currentText, passwordField.password)
             }
         } // Row
-
     } // footer
-
-
-
 } // ApplicationWindow

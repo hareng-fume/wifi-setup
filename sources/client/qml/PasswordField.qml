@@ -79,7 +79,6 @@ Rectangle {
                     passwordField.echoMode = eyeButton.state === "visible" ? TextInput.Normal : TextInput.Password;
                 }
             }
-
         } // Rectangle
     } // Row
 } // Rectangle

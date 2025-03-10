@@ -6,6 +6,8 @@ add_executable(wifisetup
 
     wifi_client.cpp
     wifi_client.h
+    wifi_model.cpp
+    wifi_model.h
 )
 
 target_link_libraries(wifisetup PRIVATE

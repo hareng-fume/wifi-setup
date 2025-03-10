@@ -107,6 +107,8 @@ void WifiHttpServer::_handleAuthenticationRequest(QTcpSocket* ip_socket,
         } else {
             auto networkId = requestJsonObj["id"].toString();
             auto networkPass = requestJsonObj["auth"].toString();
+
+            responseObj["id"] = networkId;
             if (m_credentials.contains(networkId)) {
                 if (m_credentials[networkId] == networkPass) {
                     responseObj["message"] = QString("Accepted connection to '%1'").arg(networkId);

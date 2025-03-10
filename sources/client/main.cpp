@@ -12,6 +12,8 @@ int main(int argc, char *argv[])
 #endif
     QGuiApplication app(argc, argv);
 
+    WifiNetwork::registerMetatypes();
+
     QCommandLineParser parser;
     parser.setApplicationDescription("HTTP Client for WiFi Management");
     parser.addHelpOption();
