@@ -2,52 +2,50 @@
 
 #include <QCommandLineParser>
 #include <QGuiApplication>
+#include <QHostAddress>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
-#include <QHostAddress>
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]) {
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-    QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
+  QCoreApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
 #endif
-    QGuiApplication app(argc, argv);
+  QGuiApplication app(argc, argv);
 
-    WifiNetwork::registerMetatypes();
+  WifiNetwork::registerMetatypes();
 
-    QCommandLineParser parser;
-    parser.setApplicationDescription("HTTP Client for WiFi Management");
-    parser.addHelpOption();
+  QCommandLineParser parser;
+  parser.setApplicationDescription("HTTP Client for WiFi Management");
+  parser.addHelpOption();
 
-    parser.addOption({"host", "Host address for the client", "host", "127.0.0.1"});
-    parser.addOption({"port", "Port for the client", "port", "8080"});
-    parser.process(app);
+  parser.addOption(
+      {"host", "Host address for the client", "host", "127.0.0.1"});
+  parser.addOption({"port", "Port for the client", "port", "8080"});
+  parser.process(app);
 
-    QString host = parser.value("host");
-    quint16 port = parser.value("port").toUShort();
+  QString host = parser.value("host");
+  quint16 port = parser.value("port").toUShort();
 
-    QHostAddress hostAddress;
-    if (!hostAddress.setAddress(host)) {
-        qCritical() << "ERROR: Invalid IP address provided: " << host;
-        return EXIT_FAILURE;
-    }
+  QHostAddress hostAddress;
+  if (!hostAddress.setAddress(host)) {
+    qCritical() << "ERROR: Invalid IP address provided: " << host;
+    return EXIT_FAILURE;
+  }
 
-    WifiHttpClient wifiClient(host, port, &app);
+  WifiHttpClient wifiClient(host, port, &app);
 
-    QQmlApplicationEngine engine;
-    engine.rootContext()->setContextProperty("wifiClient", &wifiClient);
+  QQmlApplicationEngine engine;
+  engine.rootContext()->setContextProperty("wifiClient", &wifiClient);
 
-    const QUrl url(QStringLiteral("qrc:/qml/main.qml"));
-    QObject::connect(
-        &engine,
-        &QQmlApplicationEngine::objectCreated,
-        &app,
-        [url](QObject *obj, const QUrl &objUrl) {
-            if (!obj && url == objUrl)
-                QCoreApplication::exit(-1);
-        },
-        Qt::QueuedConnection);
-    engine.load(url);
+  const QUrl url(QStringLiteral("qrc:/qml/main.qml"));
+  QObject::connect(
+      &engine, &QQmlApplicationEngine::objectCreated, &app,
+      [url](QObject *obj, const QUrl &objUrl) {
+        if (!obj && url == objUrl)
+          QCoreApplication::exit(-1);
+      },
+      Qt::QueuedConnection);
+  engine.load(url);
 
-    return app.exec();
+  return app.exec();
 }
