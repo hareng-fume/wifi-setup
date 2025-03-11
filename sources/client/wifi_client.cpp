@@ -75,7 +75,7 @@ void WifiHttpClient::requestValidatePassword(const QString &i_networkName,
 }
 
 //-----------------------------------------------------------------------------
-std::optional<std::pair<int, QJsonObject>>
+std::pair<int, QJsonObject>
 WifiHttpClient::_handleReply(QNetworkReply *ip_reply) {
 
   ip_reply->deleteLater();
@@ -95,14 +95,13 @@ WifiHttpClient::_handleReply(QNetworkReply *ip_reply) {
 //-----------------------------------------------------------------------------
 void WifiHttpClient::_handleNetworkList(QNetworkReply *ip_reply) {
   auto result = _handleReply(ip_reply);
-  _processNetworkList(result.value().first, result.value().second);
+  _processNetworkList(result.first, result.second);
 }
 
 //-----------------------------------------------------------------------------
 void WifiHttpClient::_handlePasswordValidation(QNetworkReply *ip_reply) {
   auto result = _handleReply(ip_reply);
-  if (result.has_value())
-    _processPasswordValidation(result.value().first, result.value().second);
+  _processPasswordValidation(result.first, result.second);
 }
 
 //-----------------------------------------------------------------------------

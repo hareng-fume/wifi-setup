@@ -25,7 +25,7 @@ signals:
   void passwordValidatedWithResult(bool, const QString &);
 
 private:
-  std::optional<std::pair<int, QJsonObject>>
+  std::pair<int, QJsonObject>
   _handleReply(QNetworkReply *ip_reply);
 
   void _handleNetworkList(QNetworkReply *ip_reply);
