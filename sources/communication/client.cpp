@@ -31,7 +31,7 @@ void HttpClient::sendRequest(HttpMethod i_method, const QString& i_endpoint,
             p_reply = mp_networkAccessManager->post(request, i_data);
             break;
         default:
-            qWarning() << "Unsupported HTTP method";
+            qWarning() << "WARNING: Unsupported HTTP method";
             return;
     }
     m_requestMap.insert(p_reply, i_callback);

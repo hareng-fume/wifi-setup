@@ -4,6 +4,7 @@
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
+#include <QHostAddress>
 
 int main(int argc, char *argv[])
 {
@@ -24,6 +25,12 @@ int main(int argc, char *argv[])
 
     QString host = parser.value("host");
     quint16 port = parser.value("port").toUShort();
+
+    QHostAddress hostAddress;
+    if (!hostAddress.setAddress(host)) {
+        qCritical() << "ERROR: Invalid IP address provided: " << host;
+        return EXIT_FAILURE;
+    }
 
     WifiHttpClient wifiClient(host, port, &app);
 

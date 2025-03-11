@@ -3,9 +3,10 @@ import QtQuick.Controls 2.15
 
 ApplicationWindow {
     visible: true
-    width: 360
     height: 480
     title: "WiFi Setup"
+    minimumHeight: header.height + body.height + footer.height
+    minimumWidth: 360
 
     property bool passwordValid: false
     property bool networkSelected: false
@@ -46,6 +47,7 @@ ApplicationWindow {
     }
 
     header: Rectangle {
+        id: header
         width: parent.width
         height: 50
         color: "#f0f0f0"
@@ -54,7 +56,6 @@ ApplicationWindow {
         Row {
             width: parent.width
             height: parent.height
-            anchors.centerIn: parent
 
             Text {
                 text: "WiFi Setup"
@@ -75,11 +76,12 @@ ApplicationWindow {
     } // header
 
     Column {
+        id: body
         width: parent.width
         spacing: 10
         padding: 10
 
-        // WiFi network ComboBox Section
+        // wifi network combo-box section
         Column {
             width: parent.width * 0.8
             anchors.horizontalCenter: parent.horizontalCenter
@@ -98,7 +100,7 @@ ApplicationWindow {
 
                 contentItem: Text {
                     text: parent.displayText
-                    leftPadding: 2  // Padding only for the selected item
+                    leftPadding: 2  // padding only for the selected item
                     verticalAlignment: Text.AlignVCenter
                 }
 
@@ -110,11 +112,12 @@ ApplicationWindow {
             }
 
             Component.onCompleted: {
-                wifiClient.requestNetworkList(); // automatically request networks on start
+                // automatically request networks on start
+                wifiClient.requestNetworkList();
             }
         }
 
-        // Password TextField Section
+        // password text-field section
         Column {
             width: parent.width * 0.8
             anchors.horizontalCenter: parent.horizontalCenter
@@ -132,6 +135,7 @@ ApplicationWindow {
     }
 
     footer: Rectangle {
+        id: footer
         width: parent.width
         height: 50
         color: "#e0e0e0"
@@ -169,8 +173,10 @@ ApplicationWindow {
                     layer.enabled: true
                 }
 
-                onClicked: wifiClient.requestValidatePassword(
+                onClicked: {
+                    wifiClient.requestValidatePassword(
                                networkSelector.currentText, passwordField.password)
+                }
             }
         } // Row
     } // footer

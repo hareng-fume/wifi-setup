@@ -17,25 +17,24 @@ namespace _Details {
 
 //-----------------------------------------------------------------------------
 static void _logError(int i_statusCode, const QString& i_errMessage) {
-    auto errorMsg = QString("Status Code: %1, %2").arg(QString::number(i_statusCode),
-                Status::getMessageFrom(i_statusCode));
+    auto message = QString("%1 %2").arg(QString::number(i_statusCode),
+               Status::getMessageFrom(i_statusCode));
 
     if (!i_errMessage.isEmpty())
-        errorMsg += " - " + i_errMessage;
+        message += " - " + i_errMessage;
 
-    if (i_statusCode >= 500)            // critical server errors
-        qCritical() << errorMsg;
-    else                                // warnings for client errors
-        qWarning() << errorMsg;
+    qCritical() << "ERROR: " << message;
 }
 
 //-----------------------------------------------------------------------------
 static void _logInfo(int i_statusCode, const QString& i_message) {
-    auto message = QString("Status Code: %1, %2").arg(QString::number(i_statusCode),
+    auto message = QString("%1, %2").arg(QString::number(i_statusCode),
                 Status::getMessageFrom(i_statusCode));
+
     if (!i_message.isEmpty())
         message += " - " + i_message;
-    qInfo() << message;
+
+    qInfo() << "INFO: " << message;
 }
 
 //-----------------------------------------------------------------------------
@@ -83,27 +82,22 @@ void WifiHttpClient::requestValidatePassword(const QString &i_networkName, const
 std::optional<std::pair<int, QJsonObject>> WifiHttpClient::_handleReply(QNetworkReply* ip_reply) {
 
     ip_reply->deleteLater();
+
     auto replyData = ip_reply->readAll();
+    auto statusCode = ip_reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    if (ip_reply->error() != QNetworkReply::NoError)
+        qCritical() << "ERROR: " << statusCode << " " << ip_reply->errorString();
 
     QJsonParseError jsonError;
     auto jsonDocument = QJsonDocument::fromJson(replyData, &jsonError);
 
-    if (jsonDocument.isNull() || !jsonDocument.isObject()) {
-        qCritical() << "ERROR: Invalid JSON response - " << jsonError.errorString();
-        return {};
-    }
-
-    auto jsonObj = jsonDocument.object();
-    auto statusCode = ip_reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-
-    return std::make_pair(statusCode, jsonObj);
+    return std::make_pair(statusCode, jsonDocument.object());
 }
 
 //-----------------------------------------------------------------------------
 void WifiHttpClient::_handleNetworkList(QNetworkReply* ip_reply) {
     auto result = _handleReply(ip_reply);
-    if (result.has_value())
-       _processNetworkList(result.value().first, result.value().second);
+    _processNetworkList(result.value().first, result.value().second);
 }
 
 //-----------------------------------------------------------------------------
@@ -116,19 +110,20 @@ void WifiHttpClient::_handlePasswordValidation(QNetworkReply* ip_reply) {
 //-----------------------------------------------------------------------------
 void WifiHttpClient::_processNetworkList(int i_statusCode, const QJsonObject& i_jsonObj) {
 
-    if (i_statusCode == 200) {
-        if (!i_jsonObj.contains("wifi_ids") || !i_jsonObj["wifi_ids"].isArray()) {
-            qWarning() << "WARNING: 'wifi_ids' missing or not an array in response";
-            return;
-        }
+    if (i_statusCode != 200)
+        return;
 
-        WifiNetworkModel::ItemList networkList;
-        for (auto&& val : i_jsonObj["wifi_ids"].toArray())
-            networkList << WifiNetworkModel::Item(val.toString(), WifiNetwork::Disconnected);
-
-        mp_model->resetItems(networkList);
-        emit wifiModelChanged();
+    if (!i_jsonObj.contains("wifi_ids") || !i_jsonObj["wifi_ids"].isArray()) {
+        qWarning() << "WARNING: 'wifi_ids' missing or not an array in response";
+        return;
     }
+
+    WifiNetworkModel::ItemList networkList;
+    for (auto&& val : i_jsonObj["wifi_ids"].toArray())
+        networkList << WifiNetworkModel::Item(val.toString(), WifiNetwork::Disconnected);
+
+    mp_model->resetItems(networkList);
+    emit wifiModelChanged();
 
     _Details::_log(i_statusCode, i_jsonObj);
 }

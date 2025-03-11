@@ -17,14 +17,14 @@ static QJsonObject loadJson(const QString &i_path)
 {
     QFile file(i_path);
     if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        qCritical() << "Failed to open file: " << i_path;
+        qCritical() << "ERROR: Failed to open file: " << i_path;
         return {};
     }
 
     auto jsonData = file.readAll();
     auto jsonDoc = QJsonDocument::fromJson(jsonData);
     if (!jsonDoc.isObject()) {
-        qCritical() << "Invalid JSON format in file: " << i_path;
+        qCritical() << "ERROR: Invalid JSON format in file: " << i_path;
         return {};
     }
 
@@ -46,14 +46,13 @@ int main(int argc, char* argv[]) {
     parser.process(app);
 
     if (!parser.isSet("config")) {
-        qCritical() << "Missing required argument: --config <path_to_json>";
-        parser.showHelp(EXIT_FAILURE); // exits with error
+        qCritical() << "ERROR: Missing required argument: --config <path_to_json>";
+        parser.showHelp(EXIT_FAILURE);
     }
 
     auto configPath = parser.value("config");
     auto settings = _Details::loadJson(configPath);
     if (settings.isEmpty()) {
-        qCritical() << "Failed to load config settings.";
         return EXIT_FAILURE;
     }
 
@@ -61,8 +60,10 @@ int main(int argc, char* argv[]) {
     int port = parser.value("port").toInt();
 
     WifiHttpServer server(&app);
-    server.loadWifiCredentials(std::move(settings));
+    server.loadWifiCredentials(settings);
     server.start(host, port);
+    if(!server.isListening())
+        return EXIT_FAILURE;
 
     return app.exec();
 }

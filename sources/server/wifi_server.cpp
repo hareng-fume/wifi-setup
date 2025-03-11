@@ -43,12 +43,12 @@ WifiHttpServer::WifiHttpServer(QObject* ip_parent /*= nullptr*/)
 }
 
 //-----------------------------------------------------------------------------
-void WifiHttpServer::loadWifiCredentials(QJsonObject&& i_settings)
+void WifiHttpServer::loadWifiCredentials(const QJsonObject& i_settings)
 {
     m_credentials.clear();
 
     if (!i_settings.contains("wifi_params") || !i_settings["wifi_params"].isArray()) {
-        qCritical() << "Invalid JSON format: missing 'wifi_params'";
+        qCritical() << "ERROR: Invalid JSON format: missing 'wifi_params'";
         return;
     }
 

@@ -131,14 +131,14 @@ void HttpServer::start(const QString& i_address, quint16 i_port)
 {
     QHostAddress hostAddress;
     if (!hostAddress.setAddress(i_address)) {
-        qCritical() << "Invalid IP address provided: " << i_address;
+        qCritical() << "ERROR: Invalid IP address provided - " << i_address;
         return;
     }
 
     if (!listen(hostAddress, i_port))
-        qCritical() << "Server failed to start! " << errorString();
+        qCritical() << "ERROR: Server failed to start! " << errorString();
     else
-        qInfo() << "Server listening on " << i_address << ", port " << i_port << "...";
+        qInfo() << "INFO: Server listening on " << i_address << ", port " << i_port << "...";
 }
 
 } // namespace Communication

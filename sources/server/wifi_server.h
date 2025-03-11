@@ -11,7 +11,7 @@ class WifiHttpServer : public Communication::HttpServer
 {
 public:
     explicit WifiHttpServer(QObject* ip_parent = nullptr);
-    void loadWifiCredentials(QJsonObject&& i_settings);
+    void loadWifiCredentials(const QJsonObject& i_settings);
 
 private:
     void _handleNetworkListRequest(QTcpSocket* ip_socket, const QString& i_requestStr);
