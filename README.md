@@ -74,7 +74,7 @@ To start the application find winsetup.exe (client app), winverification.exe (se
 
 ## Dependencies
 - **Qt5.15.2:** The core functionality is implemented in Qt5 and C++17 
-- **QML: ** The user interface is designed using QML.
-- **CMake: ** Used for building the project.
+- **QML:** The user interface is designed using QML.
+- **CMake:** Used for building the project.
 
 
