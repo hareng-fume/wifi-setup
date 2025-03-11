@@ -121,7 +121,7 @@ void WifiHttpServer::_handleAuthenticationRequest(QTcpSocket *ip_socket,
         }
       } else {
         responseObj["error"] = QString("Network '%1' not found").arg(networkId);
-        status = Status::NOT_FOUND;
+        status = Status::BAD_REQUEST;
       }
     }
   }
