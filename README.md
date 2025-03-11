@@ -16,7 +16,7 @@ The requirement that app end-users can possibly use devices led to the decision 
 - **Client Request:**  
   - No body (HTTP `GET` request).
 - **Server Response (application/json content-type):**  
-  - **If rrror:**  
+  - **If error:**  
     ```json
     {"error": "<err-message>"}
     ```
@@ -51,16 +51,15 @@ The requirement that app end-users can possibly use devices led to the decision 
 
 ## Launch
 
-&nbsp;&nbsp;&nbsp;&nbsp;To start the application find winsetup.exe (client app), winverification.exe (server app) in relative bin directory.
+To start the application find winsetup.exe (client app), winverification.exe (server app) in relative bin directory.
 
 	- winsetup.exe (127.0.0.1, 8080 - are default)
 	- winsetup.exe --host=127.0.0.1 --port=8080
 
-
-**seggins.json** could be fing in sources/client/settings/wifi.json
 	- winverification.exe --config=<json-path> (127.0.0.1, 8080 - are default)
 	- winverification.exe --config=<json-path> --host=127.0.0.1 --port=8080
 
+**settings.json** could be found in sources/client/settings/wifi.json
 
 
 ## Design Decision
