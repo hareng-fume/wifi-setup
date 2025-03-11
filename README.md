@@ -13,56 +13,69 @@ The requirement that app end-users can possibly use devices led to the decision 
 
 ## API
 ### 1) `/get_wifi_networks`
-- **Request:**  
-  - HTTP `GET` request with no body.
-- **Response (application/json):**  
-  - **Error:**  
+- **Client Request:**  
+  - No body (HTTP `GET` request).
+- **Server Response (application/json content-type):**  
+  - **If rrror:**  
     ```json
     {"error": "<err-message>"}
     ```
-    - **Status:** `400 Bad Request`  
-      - When no credentials are available.
-  - **Success:**  
+    - **HTTP Status:** `400 Bad Request` when no credentials are available.
+  - **If success:**  
     ```json
     {"wifi_ids": {"id": "wifi_1", "id": "wifi_2"}}
     ```
-    - **Status:** `200 OK`
+    - **HTTP Status:** `200 OK`
 
 ### 2) `/validate_wifi_password`
-- **Request:**  
+- **Client Request:**  
   - HTTP `POST` request with json body.
 - **Request Example (application/json):**  
   ```json
   {"id": "wifi_1", "auth": "!QAZxsw2#EDCvfr4"}
-- **Response (application/json):**  
-  - **Error:**  
+- **Server Response (application/json content-type):**  
+  - **If error:**  
     ```json
     {"error": "<err-message>"}
     ```
-    - **Status:** `400 Bad Request`
-      - When can't extract request payload.
-      - When there is no 'id' or 'auth' key in request-json
-      -	When requested 'id' key is not found
-    - **Status:** `401 Unauthorized`
-      - When password is not correct
-  - **Success:**  
+    - **HTTP Status:** `400 Bad Request` when:
+      - The request payload is missing or malformed.
+      - The request JSON does not contain id or auth keys.
+      -	The requested id key is not found.
+    - **HTTP Status:** `401 Unauthorized` when password is incorrect.
+  - **If success:**  
     ```json
     {"message": "<test-message>"}
     ```
-    - **Status:** `200 OK`
+    - **HTTP Status:** `200 OK` when the network with key 'id' exists and the password with key 'auth' is correct.
+
+## Launch
+
+&nbsp;&nbsp;&nbsp;&nbsp;To start the application find winsetup.exe (client app), winverification.exe (server app) in relative bin directory.
+
+	- winsetup.exe (127.0.0.1, 8080 - are default)
+	- winsetup.exe --host=127.0.0.1 --port=8080
+
+
+**seggins.json** could be fing in sources/client/settings/wifi.json
+	- winverification.exe --config=<json-path> (127.0.0.1, 8080 - are default)
+	- winverification.exe --config=<json-path> --host=127.0.0.1 --port=8080
+
+
 
 ## Design Decision
 
-- **Static Library: `communication`**  
-  - Contains base classes for HTTP Server and Client.
+- **Static Library: `communication`** contains base classes for HTTP Server and Client.
+- **GUI app: `wifisetup` (client)** contains:  
+  1. A specific implementation of HttpClient, class WifiHttpClient, which sends specific requests to the server and processes responses.
+  2. A custom UI model class WifiNetworkModel, which is used as a model for the network selector.  
 
-- **GUI Application: `wifisetup` (Client)**  
-  1. Implements a specific HTTP client:  
-     - `WifiHttpClient` class, which sends specific requests to the server and processes responses.  
-  2. Uses a custom UI model:  
-     - `WifiNetworkModel`, which is set as a model for the network selector.
+- **Console app: `wifiverification` (server)**  
+  1. A specific implementation of HttpServer, class WifiHttpServer, which handles specific client requests and responds in JSON format.
 
-- **Console Application: `wifiverification` (Server)**  
-  1. Implements a specific HTTP server:  
-     - `WifiHttpServer` class, which handles client requests and responds in JSON format.
+## Dependencies
+- **Qt5.15.2:** The core functionality is implemented in Qt5 and C++17 
+- **QML: ** The user interface is designed using QML.
+- **CMake: ** Used for building the project.
+
 
