@@ -130,15 +130,8 @@ void WifiHttpClient::_processNetworkList(int i_statusCode,
 //-----------------------------------------------------------------------------
 void WifiHttpClient::_processPasswordValidation(int i_statusCode,
                                                 const QJsonObject &i_jsonObj) {
-
-  const auto result =
-      i_statusCode == 200
-          ? std::make_pair(true, i_jsonObj.value("message").toString())
-          : std::make_pair(false, i_jsonObj.value("error").toString());
-
   auto connectionStatus =
-      result.first ? WifiNetwork::Connected : WifiNetwork::FailedToConnect;
-  mp_model->setConnectionStatus(i_jsonObj.value("id").toString(),
-                                connectionStatus);
+      (i_statusCode == 200) ? WifiNetwork::Connected : WifiNetwork::FailedToConnect;
+  mp_model->setConnectionStatus(i_jsonObj.value("id").toString(), connectionStatus);
   _Details::_log(i_statusCode, i_jsonObj);
 }
