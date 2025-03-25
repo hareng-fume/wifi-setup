@@ -14,9 +14,9 @@ public:
 
 private:
   void _handleNetworkListRequest(QTcpSocket *ip_socket,
-                                 const QString &i_requestStr);
+                                const QString &i_requestStr);
   void _handleAuthenticationRequest(QTcpSocket *ip_socket,
-                                    const QString &i_requestStr);
+                                const QString &i_requestStr);
 
 private:
   QMap<QString, QString> m_credentials;
