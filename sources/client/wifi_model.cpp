@@ -25,7 +25,7 @@ QVariant WifiNetworkModel::data(const QModelIndex &i_index, int i_role) const {
   if (i_role == NameRole)
     return network.name(); // network name
   else if (i_role == ConnectionRole)
-    return network.status(); // connection status (bool)
+    return network.status(); // connection status
 
   return QVariant();
 }
@@ -54,8 +54,7 @@ void WifiNetworkModel::resetItems(const ItemList &i_networks) {
 }
 
 //-----------------------------------------------------------------------------
-void WifiNetworkModel::setConnectionStatus(
-    const QString &i_networkName,
+void WifiNetworkModel::setConnectionStatus(const QString &i_networkName,
     WifiNetwork::ConnectionStatus i_connectionStatus) {
   for (int i = 0; i < m_networks.size(); ++i) {
     if (m_networks[i].name() == i_networkName) {
